@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: auth-postgres-pv
+  labels:
+    type: local
+    app: auth-postgres
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: '/mnt/postgres'
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: auth-postgres-pv-claim
+  labels:
+    app: auth-postgres
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-postgres
+  template:
+    metadata:
+      labels:
+        app: auth-postgres
+    spec:
+      containers:
+        - name: auth-postgres
+          image: postgres
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: auth-postgres-config
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: auth-postgresdb
+      volumes:
+        - name: auth-postgresdb
+          persistentVolumeClaim:
+            claimName: auth-postgres-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-postgres-srv
+spec:
+  selector:
+    app: auth-postgres
+  ports:
+    - name: db
+      protocol: TCP
+      port: 5432
+      targetPort: 5432

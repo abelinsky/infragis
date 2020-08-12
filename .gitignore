@@ -1,0 +1,15 @@
+# Dependency directory
+node_modules
+
+# Ignore built ts files
+build/**/*
+dist/**/*
+
+# API keys and secrets
+.env
+
+# Build
+public/css/main.css
+
+# Skaffold binaries
+skaffold

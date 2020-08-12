@@ -1,0 +1,21 @@
+apiVersion: skaffold/v2beta4
+kind: Config
+deploy:
+  kubeContext: minikube
+  kubectl:
+    manifests:
+      - ./infra/k8s/*
+metadata:
+  name: infragis
+build:
+  local:
+    push: false
+  artifacts:
+    - image: abelinsky/infragis-auth
+      context: auth
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: 'src/**/*.ts'
+            dest: .
