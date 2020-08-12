@@ -1,7 +1,9 @@
 import { app } from './app';
-import { authDb } from './models/authdb';
+import { authDb } from './infra/db/sequelize/authdb';
 
 const start = async () => {
+  console.log('Starting Auth Service...');
+
   if (!process.env.JWT_KEY) {
     throw new Error('JWT_KEY must be defined.');
   }
@@ -38,11 +40,22 @@ const start = async () => {
     console.log(err);
   }
 
-  process.on('SIGINT', () => authDb.client.close());
-  process.on('SIGTERM', () => authDb.client.close());
+  // process.on('SIGINT', () => {
+  //   console.log('[SIGINT] Closing database connection');
+  //   authDb.client.close();
+  // });
+  // process.on('SIGTERM', () => {
+  //   console.log('[SIGTERM] Closing database connection');
+  //   authDb.client.close();
+  // });
 
-  app.listen(3000, () => {
-    console.log('Listening on port 3000!');
+  app.listen(app.get('port'), () => {
+    console.log(
+      '  App is running on %d port in %s mode',
+      app.get('port'),
+      app.get('env')
+    );
+    console.log('  Press CTRL-C to stop\n');
   });
 };
 

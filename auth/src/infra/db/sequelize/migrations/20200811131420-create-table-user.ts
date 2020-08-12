@@ -1,12 +1,11 @@
 import { QueryInterface, DataTypes } from 'sequelize';
-import { tableName as usersTableName } from '../../src/models/user';
 
 /**
  * function that sequelize-cli runs if you want to add this migration to your database
  * */
-export async function up(query: QueryInterface) {
+export async function up(query: QueryInterface): Promise<void> {
   try {
-    return query.createTable(usersTableName, {
+    return query.createTable('users', {
       id: {
         type: DataTypes.UUID,
         primaryKey: true,
@@ -22,7 +21,7 @@ export async function up(query: QueryInterface) {
       password: {
         type: DataTypes.STRING,
         allowNull: false,
-        comment: "User's password",
+        comment: 'Users password',
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -43,9 +42,9 @@ export async function up(query: QueryInterface) {
 /**
  * function that sequelize-cli runs if you want to remove this migration from your database
  * */
-export async function down(query: QueryInterface) {
+export async function down(query: QueryInterface): Promise<void> {
   try {
-    return query.dropTable(usersTableName);
+    return query.dropTable('users');
   } catch (e) {
     return Promise.reject(e);
   }

@@ -1,11 +1,12 @@
-import * as sequelize from 'sequelize';
-import { userFactory, UserStaticModel } from './user';
+import { Sequelize, Options } from 'sequelize';
+import userModelFactory, { UserModel } from './models/user';
+import { ModelsHolder } from './models-holder';
 
-class AuthDatabase {
-  private _sequelize?: sequelize.Sequelize;
-  private _userModel?: UserStaticModel;
+class AuthDatabase implements ModelsHolder {
+  private _sequelize?: Sequelize;
+  private _userModel?: UserModel;
 
-  get client(): sequelize.Sequelize {
+  get client(): Sequelize {
     if (!this._sequelize) {
       throw new Error(
         'Cannot access sequelize instance before connecting'
@@ -17,12 +18,13 @@ class AuthDatabase {
   /**
    * Returns User model
    */
-  get User(): UserStaticModel {
+  get User(): UserModel {
     if (!this._userModel) {
       throw new Error(
         'Cannot access User Model before connecting to database'
       );
     }
+
     return this._userModel;
   }
 
@@ -37,17 +39,10 @@ class AuthDatabase {
     database: string,
     username: string,
     password?: string,
-    options?: sequelize.Options
+    options?: Options
   ): Promise<void> {
-    this._sequelize = new sequelize.Sequelize(
-      database,
-      username,
-      password,
-      options
-    );
-
+    this._sequelize = new Sequelize(database, username, password, options);
     this._initDb();
-
     return this.client.authenticate();
   }
 
@@ -55,7 +50,7 @@ class AuthDatabase {
    * Creates models
    */
   _initDb() {
-    this._userModel = userFactory(this.client);
+    this._userModel = userModelFactory(this.client);
 
     // Sync models
     this.client.sync();

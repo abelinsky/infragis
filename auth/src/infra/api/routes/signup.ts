@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { body } from 'express-validator';
 import jwt from 'jsonwebtoken';
-import { authDb } from '../models/authdb';
+import { authDb } from '../../db/sequelize/authdb';
 import { BadRequestError, validateRequest } from '@infragis/common';
 
 const router = express.Router();
