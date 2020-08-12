@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { body } from 'express-validator';
-import { authDb } from '../models/authdb';
-import { Password } from '../services/password';
+import { authDb } from '../../db/sequelize/authdb';
+import { Password } from '../../../services/password';
 import { validateRequest, BadRequestError } from '@infragis/common';
 import jwt from 'jsonwebtoken';
 
