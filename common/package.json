@@ -1,6 +1,6 @@
 {
   "name": "@infragis/common",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Common package of Infragis platform",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -10,7 +10,8 @@
   "scripts": {
     "clean": "del ./dist/*",
     "build": "npm run clean && tsc",
-    "pub": "git add . && git commit -m \"Update\" && npm version patch && npm run build && npm publish"
+    "pub": "git add . && git commit -m \"Update\" && npm version patch && npm run build && npm publish",
+    "test": ""
   },
   "keywords": [],
   "author": "Alexander Belinsky",
