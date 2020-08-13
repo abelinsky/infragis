@@ -1,6 +1,6 @@
 {
   "name": "@infragis/common",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Common package of Infragis platform",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
