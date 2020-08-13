@@ -30,6 +30,6 @@ jobs:
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
-      - run: cd common && npm run build && npm publish
+      - run: cd common && npm install && npm run build && npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
