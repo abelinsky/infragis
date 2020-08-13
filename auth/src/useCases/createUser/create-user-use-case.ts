@@ -1,8 +1,8 @@
-import { UseCase } from '../../core/use-case';
+import { UseCase } from '@/core/use-case';
 import { CreateUserDTO } from './create-user-dto';
-import { IUserRepo } from '../../repos/userRepo';
+import { IUserRepo } from '@/repos/userRepo';
 import { BadRequestError } from '@infragis/common';
-import { User } from '../../domain/user';
+import { User } from '@/domain/user';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface CreateUserResults {
@@ -19,7 +19,7 @@ export class CreateUserUseCase extends UseCase<
   }
 
   protected async executeImpl(
-    params?: CreateUserDTO
+    params: CreateUserDTO
   ): Promise<CreateUserResults> {
     const { email, password } = params;
 

@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { BaseController } from '../../core/base-controller';
+import { BaseController } from '@/core/base-controller';
 import { CreateUserDTO } from './create-user-dto';
-// import { sanitize } from '../../utils/text-utils';
 import { CreateUserUseCase } from './create-user-use-case';
 import jwt from 'jsonwebtoken';
 
@@ -22,10 +21,10 @@ export class CreateUserController extends BaseController {
     try {
       const result = await this.useCase.execute(dto);
       if (!result.isSuccess()) {
-        return this.fail(result.error);
+        return this.fail(result.getError());
       }
 
-      const user = result.data.user;
+      const user = result.getValue().user;
 
       // Create JWT
       const userJwt = jwt.sign(
@@ -41,7 +40,7 @@ export class CreateUserController extends BaseController {
         jwt: userJwt,
       };
 
-      this.ok(res, result.data, 201);
+      this.ok(res, result.getValue(), 201);
     } catch (err) {
       this.fail(err);
     }

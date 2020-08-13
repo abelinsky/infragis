@@ -1,5 +1,5 @@
 import { app } from './app';
-import { authDb } from './infra/db/sequelize/authdb';
+import { authDb } from '@/infra/db/sequelize/authdb';
 
 const start = async () => {
   console.log('Starting Auth Service...');

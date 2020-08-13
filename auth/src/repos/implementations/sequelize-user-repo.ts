@@ -1,7 +1,7 @@
-import { IUserRepo } from '../userRepo';
-import { User } from '../../domain/user';
-import { UserMapper } from '../../mappers/user-map';
-import { ModelsHolder } from '../../infra/db/sequelize/models-holder';
+import { IUserRepo } from '@/repos/userRepo';
+import { User } from '@/domain/user';
+import { UserMapper } from '@/mappers/user-map';
+import { ModelsHolder } from '@/infra/db/sequelize/models-holder';
 
 export class SequelizeUserRepo implements IUserRepo {
   constructor(protected _modelsHolder: ModelsHolder) {}

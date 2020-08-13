@@ -1,18 +1,16 @@
-import { UseCaseResult } from './use-case-result';
+import { Result } from './result';
 
 export abstract class UseCase<TRequest, TResponse> {
   protected abstract async executeImpl(
     params?: TRequest
   ): Promise<TResponse>;
 
-  public async execute(
-    params?: TRequest
-  ): Promise<UseCaseResult<TResponse>> {
+  public async execute(params?: TRequest): Promise<Result<TResponse>> {
     try {
       const result = await this.executeImpl(params);
-      return UseCaseResult.success(result);
+      return Result.success(result);
     } catch (err) {
-      return UseCaseResult.error(err);
+      return Result.error(err);
     }
   }
 }

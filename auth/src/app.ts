@@ -5,7 +5,7 @@ import compression from 'compression';
 import cookieSession from 'cookie-session';
 
 import { errorHandler, NotFoundError } from '@infragis/common';
-import { usersRouter } from './infra/api/routes';
+import { usersRouter } from '@/infra/api/routes';
 
 // import { signUpRouter } from './infra/api/routes/signup';
 // import { signInRouter } from './infra/api/routes/signin';
