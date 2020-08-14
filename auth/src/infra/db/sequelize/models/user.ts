@@ -1,5 +1,5 @@
 import { Sequelize, Model, DataTypes, ModelCtor } from 'sequelize';
-import { Password } from '../../../../services/password';
+import { Password } from '../../../../domain/services/password';
 
 // Attributes specified when creating a new instance of the model.
 export interface UserAttributes {
