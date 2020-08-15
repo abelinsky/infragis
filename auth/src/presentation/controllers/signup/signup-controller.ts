@@ -16,10 +16,6 @@ export class SignUpController implements Controller {
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     const userDto = httpRequest.body as CreateUserDTO;
 
-    const a = 0;
-    console.log('*** DELETE ME');
-    userDto.email = 'asdasd';
-
     const result = await this.createUserUseCase.execute(userDto);
     if (!result.isSuccess()) {
       return badRequest(new BadRequestError(result.getError()));

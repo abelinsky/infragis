@@ -9,7 +9,10 @@
       "request": "launch",
       "name": "Debug Auth Service",
       "preLaunchTask": "npm: build",
-      "program": "${workspaceFolder}/src/main/server.ts",
+      "program": "${workspaceFolder}/src/main/index.ts",
+      // "program": "${workspaceFolder}/src/main/config/config-generator.ts",
+      // "args": ["dev"],
+
       "protocol": "inspector",
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "sourceMaps": true,

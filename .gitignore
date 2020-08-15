@@ -13,3 +13,10 @@ public/css/main.css
 
 # Skaffold binaries
 skaffold
+
+# env
+secrets.yaml
+.env
+.dev.secrets.env
+.prod.secrets.env
+.docker-compose.env

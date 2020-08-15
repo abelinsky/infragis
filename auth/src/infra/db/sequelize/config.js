@@ -5,7 +5,7 @@ const databaseCredentials = {
     password: process.env.POSTGRES_PASSWORD, // default user password (default)
     database: process.env.POSTGRES_DB,
     host: process.env.POSTGRES_HOST,
-    port: 5432, // default postgres port
+    port: 5432,
     dialect: 'postgres',
     logging: false, // logging can be enabled via console.log
     sync: {

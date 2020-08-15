@@ -42,6 +42,7 @@ class AuthDatabase implements IModels {
     options?: Options
   ): Promise<void> {
     this._sequelize = new Sequelize(database, username, password, options);
+    //this._sequelize = new Sequelize('postgres://admin:admin123@db:5432/authdb')
     this._initDb();
     return this.client.authenticate();
   }

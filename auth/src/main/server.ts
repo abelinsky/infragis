@@ -8,71 +8,86 @@ if (process.env.NODE_ENV !== 'production') {
   });
 } else require('module-alias/register');
 
+import { injectable, inject } from 'inversify';
 import app from './app';
 import { authDb } from '@/infra/db/sequelize/auth-db';
 import env, { assertEnvSet } from './config/env';
+import { ILogger, LOGGER_TYPE } from '@/core/utils/';
 
-const start = async () => {
-  console.log('Starting Auth Service...');
+@injectable()
+export class AuthServer {
+  constructor(@inject(LOGGER_TYPE) private logger: ILogger) {
+    this.logger.info('Starting Auth Service...');
 
-  // if (!process.env.JWT_KEY) {
-  //   throw new Error('JWT_KEY must be defined.');
-  // }
-  // if (!process.env.POSTGRES_DB) {
-  //   throw new Error('POSTGRES_DB env variable must be defined');
-  // }
-  // if (!process.env.POSTGRES_USER) {
-  //   throw new Error('POSTGRES_USER env variable must be defined');
-  // }
-  // if (!process.env.POSTGRES_PASSWORD) {
-  //   throw new Error('POSTGRES_PASSWORD env variable must be defined');
-  // }
-  // if (!process.env.POSTGRES_HOST) {
-  //   throw new Error('POSTGRES_HOST env variable must be defined');
-  // }
+    // assert env vars
+    assertEnvSet();
 
-  // Connecting to database
+    // Connecting to database
+    this.connectToDb();
 
-  assertEnvSet();
-
-  try {
-    await authDb.connect(
-      env.POSTGRES_DB,
-      env.POSTGRES_USER,
-      env.POSTGRES_PASSWORD,
-      {
-        dialect: 'postgres',
-        host: env.POSTGRES_HOST,
-      }
-    );
-    console.log('Connected to Postgres');
-
-    // authDb.client.addHook('afterDisconnect', () => {
-    //   console.log('Database connection has been disconnected');
-    // });
-  } catch (err) {
-    console.log(err);
+    // start server
+    app.listen(app.get('port'), () => {
+      this.logger.info(
+        `  App is running on ${app.get('port')} port in ${app.get(
+          'env'
+        )} mode`
+      );
+      console.log('  Press CTRL-C to stop\n');
+    });
   }
 
-  // process.on('SIGINT', () => {
-  //   console.log('[SIGINT] Closing database connection');
-  //   authDb.client.close();
-  // });
-  // process.on('SIGTERM', () => {
-  //   console.log('[SIGTERM] Closing database connection');
-  //   authDb.client.close();
-  // });
+  async connectToDb(): Promise<void> {
+    try {
+      await authDb.connect(
+        env.POSTGRES_DB,
+        env.POSTGRES_USER,
+        env.POSTGRES_PASSWORD,
+        {
+          dialect: 'postgres',
+          host: env.POSTGRES_HOST,
+          port: 5432,
+        }
+      );
+      console.log('Connected to Postgres');
+    } catch (err) {
+      console.log(err);
+    }
+  }
+}
 
-  app.listen(app.get('port'), () => {
-    console.log(
-      '  App is running on %d port in %s mode',
-      app.get('port'),
-      app.get('env')
-    );
-    console.log('  Press CTRL-C to stop\n');
+// const start = async () => {
+//   console.log('Starting Auth Service...');
 
-    console.log(process.env.NODE_ENV);
-  });
-};
+//   // Connecting to database
 
-start();
+//   assertEnvSet();
+
+//   try {
+//     await authDb.connect(
+//       env.POSTGRES_DB,
+//       env.POSTGRES_USER,
+//       env.POSTGRES_PASSWORD,
+//       {
+//         dialect: 'postgres',
+//         host: env.POSTGRES_HOST,
+//       }
+//     );
+//     console.log('Connected to Postgres');
+
+//   } catch (err) {
+//     console.log(err);
+//   }
+
+//   app.listen(app.get('port'), () => {
+//     console.log(
+//       '  App is running on %d port in %s mode',
+//       app.get('port'),
+//       app.get('env')
+//     );
+//     console.log('  Press CTRL-C to stop\n');
+
+//     console.log(process.env.NODE_ENV);
+//   });
+// };
+
+// start();
