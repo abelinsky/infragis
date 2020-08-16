@@ -1,3 +1,5 @@
+// TODO: obsolete, remove file. Don't forget 'auth-postgres-srv.default' for k8s config.
+
 const env = {
   JWT_KEY: process.env.JWT_KEY,
   POSTGRES_DB: process.env.POSTGRES_DB,
@@ -14,4 +16,4 @@ export const assertEnvSet = (): void => {
   }
 };
 
-export default env;
+//export default env;

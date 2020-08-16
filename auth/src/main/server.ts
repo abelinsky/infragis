@@ -11,23 +11,31 @@ if (process.env.NODE_ENV !== 'production') {
 import { injectable, inject } from 'inversify';
 import app from './app';
 import { authDb } from '@/infra/db/sequelize/auth-db';
-import env, { assertEnvSet } from './config/env';
 import { ILogger, LOGGER_TYPE } from '@/core/utils/';
+import { IConfig, GLOBAL_CONFIG_TYPE } from '@/core/config';
+import { AUTH_CONFIG_TYPE } from './auth.config';
 
 @injectable()
 export class AuthServer {
-  constructor(@inject(LOGGER_TYPE) private logger: ILogger) {
-    this.logger.info('Starting Auth Service...');
-
-    // assert env vars
-    assertEnvSet();
+  constructor(
+    @inject(GLOBAL_CONFIG_TYPE) private _globalConfig: IConfig,
+    @inject(AUTH_CONFIG_TYPE) private _authConfig: IConfig,
+    @inject(LOGGER_TYPE) private _logger: ILogger
+  ) {
+    this._logger.info(
+      `Starting Auth Service in ${this._globalConfig.get(
+        'global.environment'
+      )} mode...`
+    );
 
     // Connecting to database
-    this.connectToDb();
+    (async () => {
+      await this.connectToDb();
+    })();
 
     // start server
     app.listen(app.get('port'), () => {
-      this.logger.info(
+      this._logger.info(
         `  App is running on ${app.get('port')} port in ${app.get(
           'env'
         )} mode`
@@ -39,12 +47,12 @@ export class AuthServer {
   async connectToDb(): Promise<void> {
     try {
       await authDb.connect(
-        env.POSTGRES_DB,
-        env.POSTGRES_USER,
-        env.POSTGRES_PASSWORD,
+        this._authConfig.get('auth.database.name'),
+        this._authConfig.get('auth.database.user'),
+        this._authConfig.get('auth.database.password'),
         {
           dialect: 'postgres',
-          host: env.POSTGRES_HOST,
+          host: this._authConfig.get('auth.database.host'),
           port: 5432,
         }
       );
@@ -54,40 +62,3 @@ export class AuthServer {
     }
   }
 }
-
-// const start = async () => {
-//   console.log('Starting Auth Service...');
-
-//   // Connecting to database
-
-//   assertEnvSet();
-
-//   try {
-//     await authDb.connect(
-//       env.POSTGRES_DB,
-//       env.POSTGRES_USER,
-//       env.POSTGRES_PASSWORD,
-//       {
-//         dialect: 'postgres',
-//         host: env.POSTGRES_HOST,
-//       }
-//     );
-//     console.log('Connected to Postgres');
-
-//   } catch (err) {
-//     console.log(err);
-//   }
-
-//   app.listen(app.get('port'), () => {
-//     console.log(
-//       '  App is running on %d port in %s mode',
-//       app.get('port'),
-//       app.get('env')
-//     );
-//     console.log('  Press CTRL-C to stop\n');
-
-//     console.log(process.env.NODE_ENV);
-//   });
-// };
-
-// start();
