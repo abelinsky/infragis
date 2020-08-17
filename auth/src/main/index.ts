@@ -8,7 +8,7 @@ if (process.env['global.environment'] === 'dev') {
   });
 } else require('module-alias/register');
 
-import { DI } from '@/core/dependency-injection';
+import { DI } from '@infragis/common';
 import { AuthConfig, AUTH_CONFIG_TYPE } from './auth.config';
 import { AuthServer } from '@/main/server';
 import { Logger, LOGGER_TYPE } from '@/core/utils';

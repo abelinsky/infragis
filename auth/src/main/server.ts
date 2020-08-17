@@ -1,13 +1,3 @@
-import moduleAlias from 'module-alias';
-import path from 'path';
-
-if (process.env.NODE_ENV !== 'production') {
-  // We are in ts-node-env watch. Just set @ to up one directory
-  moduleAlias.addAliases({
-    '@': path.resolve(__dirname, '..'),
-  });
-} else require('module-alias/register');
-
 import { injectable, inject } from 'inversify';
 import app from './app';
 import { authDb } from '@/infra/db/sequelize/auth-db';
@@ -40,7 +30,7 @@ export class AuthServer {
           'env'
         )} mode`
       );
-      console.log('  Press CTRL-C to stop\n');
+      this._logger.info('  Press CTRL-C to stop\n');
     });
   }
 
@@ -56,9 +46,9 @@ export class AuthServer {
           port: 5432,
         }
       );
-      console.log('Connected to Postgres');
+      this._logger.info('Connected to Postgres');
     } catch (err) {
-      console.log(err);
+      this._logger.error(err);
     }
   }
 }

@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package authentication;
+
+message AuthenticationEvents { repeated AuthenticationEvent events = 1; }
+
+message AuthenticationEvent {
+  string id = 1;
+  string name = 2;
+  AuthenticationPayload payload = 3;
+}
+
+message AuthenticationPayload {
+  oneof payload {
+    SignUpRequested signUpRequested = 1;
+    SignOut signOut = 2;
+  }
+}
+
+message SignUpRequested {
+  string sessionId = 1;
+  string email = 2;
+}
+
+message SignOut { string signeOutAt = 1; }

@@ -2,26 +2,15 @@ version: "3"
 
 services:
   auth:
-    container_name: auth
+    container_name: gateway
     image: node:lts-alpine
     working_dir: /usr/src/app
     volumes:
-      - ./auth/package.json:/usr/src/app/package.json
-      - ./auth/tsconfig.json:/usr/src/app/tsconfig.json
-      - ./auth/src:/usr/src/app/src
-      - ./auth/node_modules:/usr/src/app/node_modules
+      - ./gateway/package.json:/usr/src/app/package.json
+      - ./gateway/tsconfig.json:/usr/src/app/tsconfig.json
+      - ./gateway/src:/usr/src/app/src
+      - ./gateway/node_modules:/usr/src/app/node_modules
     env_file: env/.docker-compose.env
     command: node_modules/.bin/ts-node-dev src/main --colors --transpileOnly --debounce 1500
     ports:
       - "3000:3000"
-    depends_on:
-      - db
-
-  db:
-    container_name: database
-    image: postgres
-    env_file: env/.docker-compose.env
-    ports:
-      - "54320:5432"
-    volumes:
-      - ./server_db:/var/lib/postgresql/data

@@ -2,8 +2,8 @@
 node_modules
 
 # Ignore built ts files
-build/**/*
-dist/**/*
+build
+dist
 
 # API keys and secrets
 .env

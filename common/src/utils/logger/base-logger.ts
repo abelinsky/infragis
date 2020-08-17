@@ -1,9 +1,9 @@
 import { injectable } from 'inversify';
 
-import { ILogger } from './ilogger';
+import { ILogger } from './contracts/ilogger';
 
 @injectable()
-export class Logger implements ILogger {
+export class BaseLogger implements ILogger {
   constructor() {
     this.info('LOGGER CREATED');
   }

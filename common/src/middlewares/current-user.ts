@@ -7,6 +7,7 @@ interface UserPayload {
 }
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       currentUser?: UserPayload;
@@ -19,17 +20,17 @@ export const currentUser = (
   res: Response,
   next: NextFunction
 ) => {
-  if (!req.session?.jwt) {
-    return next();
-  }
+  // if (!req.session?.jwt) {
+  //   return next();
+  // }
 
-  try {
-    const payload = jwt.verify(
-      req.session.jwt,
-      process.env.JWT_KEY!
-    ) as UserPayload;
-    req.currentUser = payload;
-  } catch (err) {}
+  // try {
+  //   const payload = jwt.verify(
+  //     req.session.jwt,
+  //     process.env.JWT_KEY!
+  //   ) as UserPayload;
+  //   req.currentUser = payload;
+  // } catch (err) {}
 
   next();
 };

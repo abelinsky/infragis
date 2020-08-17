@@ -1,9 +1,10 @@
 import * as dotenv from 'dotenv';
-import { IConfig } from './iconfig';
 import { injectable } from 'inversify';
 
+import { IConfig } from './contracts/iconfig';
+
 @injectable()
-export abstract class Config implements IConfig {
+export abstract class BaseConfig implements IConfig {
   config: Record<string, string> = {};
   private parsed: Record<string, string> = {};
 
@@ -36,21 +37,22 @@ export abstract class Config implements IConfig {
     this.setConfig(externalKeys);
   }
 
-  get(identifier: string): string {
-    const value = this.config[identifier] || this.getEnvVar(identifier);
+  get(identifier: string, alternative?: string): string {
+    const value =
+      this.config[identifier] || this.getEnvVar(identifier) || alternative;
     if (!value)
       throw new Error(`No config value with ${identifier} found.`);
     return value;
   }
 
-  getNumber(identifier: string): number {
-    const value = this.get(identifier);
+  getNumber(identifier: string, alternative?: number): number {
+    const value = this.get(identifier, alternative?.toString());
     return Number(value);
   }
 
-  getArray(identifier: string): string[] {
+  getArray(identifier: string, alternative?: string[]): string[] {
     const value = this.get(identifier);
-    if (!value) return [];
+    if (!value) return alternative || [];
     if (value.split(';').length) return value.split(';');
     return [value];
   }

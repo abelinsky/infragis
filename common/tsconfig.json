@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "declaration": true,
     "allowJs": true,
     "module": "commonjs",
     "moduleResolution": "node",
@@ -14,10 +15,11 @@
     "pretty": true,
     "types": ["node"],
     "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "typeRoots": ["./node_modules/@types", "./src/@types"],
     "outDir": "./dist",
     "paths": {
-      "@/*": ["*"],
       "*": ["node_modules/*", "src/types/*"]
     }
   },

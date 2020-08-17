@@ -20,9 +20,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "../common/src/dependency-injection/index.ts"
-  ],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
 }
