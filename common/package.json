@@ -1,6 +1,6 @@
 {
   "name": "@infragis/common",
-  "version": "0.0.30",
+  "version": "0.0.36",
   "description": "Common package of Infragis platform",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -10,6 +10,7 @@
   "scripts": {
     "clean": "del ./dist/*",
     "build": "npm run clean && tsc",
+    "postbuild": "cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
     "pub": "npm version patch && npm run build && npm publish",
     "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
     "test": ""
@@ -38,6 +39,7 @@
     "@types/jsonwebtoken": "^8.5.0",
     "@typescript-eslint/eslint-plugin": "^3.9.0",
     "@typescript-eslint/parser": "^3.9.0",
+    "cpy-cli": "^3.1.1",
     "del-cli": "^3.0.1",
     "eslint": "^7.7.0",
     "typescript": "^3.9.7"

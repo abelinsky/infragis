@@ -3,7 +3,7 @@ import * as grpc from '@grpc/grpc-js';
 import { ILogger, LOGGER_TYPE } from '../utils';
 import { ApiService, loadApiService } from '../api-contracts';
 import { Context } from 'express-validator/src/context';
-import { RPC_METHODS } from './rpc-method';
+import { RPC_HANDLERS } from './rpc-handler';
 import asyncRetry from 'async-retry';
 import { EventSourcingErrorNames } from '../event-sourcing/error-names';
 import { RpcStatus } from './rpc-status';
@@ -18,7 +18,7 @@ export class RpcServer {
 
   initialize(
     services: ApiService[],
-    methodsHandlerInstance: object,
+    methodsHandlerInstance: Record<string, any>,
     port: number = this._defaultPort
   ) {
     this._server.bindAsync(
@@ -27,7 +27,7 @@ export class RpcServer {
       (err) => {
         if (err)
           throw new Error(
-            `Error occured while starting rpc server on port ${port}`
+            `Error occured while starting rpc server on ${this.host}:${port}`
           );
         this._server.start();
       }
@@ -38,8 +38,11 @@ export class RpcServer {
     );
   }
 
-  private _addService(service: ApiService, methodsHandler: object) {
-    const methods = Reflect.getMetadata(RPC_METHODS, service);
+  private _addService(
+    service: ApiService,
+    methodsHandler: Record<string, any>
+  ) {
+    const methods = Reflect.getMetadata(RPC_HANDLERS, service);
     const implementations: Record<string, any> = {};
 
     if (!methods) {
@@ -125,7 +128,7 @@ export class RpcServer {
 
 export type RpcServerFactory = (options: {
   services: ApiService[];
-  methodsHandlerInstance: object;
+  methodsHandlerInstance: Record<string, any>;
   port?: number;
 }) => RpcServer;
 

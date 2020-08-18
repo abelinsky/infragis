@@ -1,7 +1,7 @@
 {
-  "name": "gateway",
+  "name": "authentication",
   "version": "0.0.1",
-  "description": "Gateway service for Infragis Platform",
+  "description": "Authentication service for Infragis Platform",
   "main": "dist/main/index.js",
   "repository": {
     "type": "git",
@@ -12,7 +12,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && node_modules/typescript/bin/tsc -p tsconfig-build.json && npm run lint",
-    "start": "ts-node-dev --respawn --transpile-only src/main/index.ts",
+    "start": "ts-node-dev --respawn --transpile-only src/main",
     "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
     "migrate": "npm run build && node_modules/.bin/sequelize db:migrate --env development",
     "migrate:undo": "npm run build && node_modules/.bin/sequelize db:migrate:undo --env development",

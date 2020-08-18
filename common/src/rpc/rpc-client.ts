@@ -9,7 +9,7 @@ export class RpcClient<T> {
   client: T = {} as any;
 
   private readonly _defaultPort = 40001;
-  private _grpcClient: grpc.Client;
+  private _grpcClient!: grpc.Client;
 
   constructor(@inject(LOGGER_TYPE) private _logger: ILogger) {}
 

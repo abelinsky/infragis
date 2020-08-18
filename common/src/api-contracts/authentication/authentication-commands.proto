@@ -1,6 +1,7 @@
 import "google/protobuf/empty.proto";
 
 import "authentication-events.proto";
+import "../common/common.proto";
 
 syntax = "proto3";
 
@@ -13,5 +14,5 @@ message RequestEmailSignUp {
 
 service AuthenticationCommands {
   rpc requestEmailSignUp(RequestEmailSignUp) returns (google.protobuf.Empty);
-  rpc getEvents() returns (AuthenticationEvents);
+  rpc getEvents(RequestGetEvents) returns (AuthenticationEvents);
 }

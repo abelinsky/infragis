@@ -12,10 +12,18 @@ import {
   DI,
   GlobalConfig,
   GLOBAL_CONFIG,
-  ILogger,
   BaseLogger,
   LOGGER_TYPE,
 } from '@infragis/common/';
+
+// rpc
+import {
+  RpcClientFactory,
+  RPC_CLIENT_FACTORY,
+  rpcClientFactory,
+  RpcClient,
+} from '@infragis/common/';
+
 import { GatewayServer } from '@/main/server';
 import { AuthenticationController } from '@/presentation';
 import { GatewayConfig, GATEWAY_CONFIG } from './config';
@@ -24,9 +32,10 @@ import {
   expressServerFactory,
 } from '@/main/factories';
 
-DI.registerProviders(GatewayServer, AuthenticationController);
+DI.registerProviders(GatewayServer, AuthenticationController, RpcClient);
 
 DI.registerFactory(EXPRESS_SERVER_FACTORY, expressServerFactory);
+DI.registerFactory(RPC_CLIENT_FACTORY, rpcClientFactory);
 
 DI.registerSingleton(GLOBAL_CONFIG, GlobalConfig);
 DI.registerSingleton(GATEWAY_CONFIG, GatewayConfig);

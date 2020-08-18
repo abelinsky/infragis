@@ -24,3 +24,6 @@ export * from './utils';
 
 // api
 export * from './api-contracts';
+
+// rpc
+export * from './rpc';

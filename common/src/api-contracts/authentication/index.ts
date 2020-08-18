@@ -1,7 +1,7 @@
-import { ApiService } from '../api.service';
+import {ApiService} from '../api.service';
 
 export const AuthenticationCommandsService: ApiService = {
-  proto: 'authentication-commands',
+  proto: 'authentication-commands.proto',
   packageName: 'authentication',
   serviceName: 'AuthenticationCommands',
 };
