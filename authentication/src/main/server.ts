@@ -5,40 +5,46 @@ import {
   RPC_SERVER_FACTORY,
   rpcServerFactory,
   RpcServerFactory,
+  GetEventsCommand,
+  GetEvents,
+  StoredEvent,
 } from '@infragis/common';
-import {
-  IConfig,
-  LOGGER_TYPE,
-  GLOBAL_CONFIG,
-  ILogger,
-} from '@infragis/common';
+import { IConfig, LOGGER_TYPE, GLOBAL_CONFIG, ILogger } from '@infragis/common';
 import { AUTHENTICATION_CONFIG } from '@/main/config';
-import {
-  AuthenticationCommands,
-  AuthenticationCommandsService,
-} from '@infragis/common';
+import { AuthenticationCommands, AuthenticationCommandsService } from '@infragis/common';
+import { EmailSignUp } from '../usecases';
+import { IUseCase } from '@infragis/common';
 
 @injectable()
-export class AuthenticationServer
-implements AuthenticationCommands.Service {
-  private _rpcServer: RpcServer = this._rpcServerFactory({
+export class AuthenticationServer implements AuthenticationCommands.Service {
+  private rpcServer: RpcServer = this.rpcServerFactory({
     services: [AuthenticationCommandsService],
     methodsHandlerInstance: this,
   });
 
+  @inject(EmailSignUp.USECASE_NAME)
+  private emailSignupUseCase: IUseCase<AuthenticationCommands.Service, EmailSignUp.UsecaseType>;
+
   constructor(
-    @inject(GLOBAL_CONFIG) private _globalConfig: IConfig,
-    @inject(AUTHENTICATION_CONFIG) private _gatewayConfig: IConfig,
-    @inject(LOGGER_TYPE) private _logger: ILogger,
-    @inject(RPC_SERVER_FACTORY) private _rpcServerFactory: RpcServerFactory
+    @inject(GLOBAL_CONFIG) private globalConfig: IConfig,
+    @inject(AUTHENTICATION_CONFIG) private gatewayConfig: IConfig,
+    @inject(LOGGER_TYPE) private logger: ILogger,
+    @inject(RPC_SERVER_FACTORY) private rpcServerFactory: RpcServerFactory
   ) {}
 
   @RpcHandler(AuthenticationCommandsService)
-  async requestEmailSignUp(
-    payload: AuthenticationCommands.RequestEmailSignUp
-  ): Promise<void> {
-    this._logger.info(
-      `AuthenticationServer:requestEmailSignUp rpc call with payload: email: ${payload.email}, password: ${payload.password}`
-    );
+  async getEvents(
+    payload: GetEvents
+  ): Promise<{
+    events: StoredEvent[];
+  }> {
+    return new Promise((resolve, reject) => {
+      resolve({ events: [] });
+    });
+  }
+
+  @RpcHandler(AuthenticationCommandsService)
+  async requestEmailSignUp(payload: AuthenticationCommands.RequestEmailSignUp): Promise<void> {
+    await this.emailSignupUseCase.execute(payload);
   }
 }

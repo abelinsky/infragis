@@ -1,4 +1,4 @@
-import {ApiService} from '../api.service';
+import { ApiService } from '../api.service';
 
 export const AuthenticationCommandsService: ApiService = {
   proto: 'authentication-commands.proto',
@@ -7,3 +7,4 @@ export const AuthenticationCommandsService: ApiService = {
 };
 
 export * as AuthenticationCommands from './authentication-commands.contract';
+export * as AuthenticationEvents from './authentication-domain-events';

@@ -9,9 +9,9 @@ export class RpcClient<T> {
   client: T = {} as any;
 
   private readonly _defaultPort = 40001;
-  private _grpcClient!: grpc.Client;
+  private grpcClient!: grpc.Client;
 
-  constructor(@inject(LOGGER_TYPE) private _logger: ILogger) {}
+  constructor(@inject(LOGGER_TYPE) private logger: ILogger) {}
 
   initialize(
     host: string,
@@ -19,7 +19,7 @@ export class RpcClient<T> {
     port: number = this._defaultPort
   ) {
     const serviceDef = loadApiService(service);
-    this._grpcClient = new serviceDef(
+    this.grpcClient = new serviceDef(
       `${host}:${port}`,
       grpc.credentials.createInsecure()
     );
@@ -36,9 +36,9 @@ export class RpcClient<T> {
     methodsNames.forEach((methodName) => {
       (this.client as any)[methodName] = (payload: any) => {
         return new Promise((resolve, reject) => {
-          this._logger.info('Called in rpc client', methodName, payload);
+          this.logger.info('Called in rpc client', methodName, payload);
           const method: grpc.requestCallback<any> = (this
-            ._grpcClient as any)[methodName](
+            .grpcClient as any)[methodName](
             payload,
             (err: grpc.ServiceError, response: any) => {
               if (err) {
@@ -47,7 +47,7 @@ export class RpcClient<T> {
               resolve(response);
             }
           );
-          (this._grpcClient as any)[methodName].bind(method);
+          (this.grpcClient as any)[methodName].bind(method);
         });
       };
     });

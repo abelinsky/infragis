@@ -10,28 +10,21 @@ if (process.env['global.environment'] === 'dev' || __DEBUG) {
   });
 } else require('module-alias/register');
 
-import {
-  DI,
-  GlobalConfig,
-  GLOBAL_CONFIG,
-  BaseLogger,
-  LOGGER_TYPE,
-} from '@infragis/common/';
+import { DI, GlobalConfig, GLOBAL_CONFIG, BaseLogger, LOGGER_TYPE } from '@infragis/common/';
 
 // rpc
-import {
-  RpcServer,
-  rpcServerFactory,
-  RPC_SERVER_FACTORY,
-} from '@infragis/common/';
+import { RpcServer, rpcServerFactory, RPC_SERVER_FACTORY } from '@infragis/common/';
 
-import {
-  AuthenticationConfig,
-  AUTHENTICATION_CONFIG,
-} from '@/main/config';
+// use-cases
+import { EmailSignUp } from '../usecases';
+
+import { AuthenticationConfig, AUTHENTICATION_CONFIG } from '@/main/config';
 import { AuthenticationServer } from '@/main/server';
 
 DI.registerProviders(AuthenticationServer, RpcServer);
+
+// UseCases
+DI.registerIdentifiedProvider(EmailSignUp.USECASE_NAME, EmailSignUp.RequestEmailSignUp);
 
 DI.registerFactory(RPC_SERVER_FACTORY, rpcServerFactory);
 

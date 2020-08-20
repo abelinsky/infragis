@@ -10,7 +10,7 @@ import { RpcStatus } from './rpc-status';
 
 @injectable()
 export class RpcServer {
-  private _server = new grpc.Server();
+  private server = new grpc.Server();
   private readonly _defaultPort = 40001;
   private readonly host = '0.0.0.0';
 
@@ -21,7 +21,7 @@ export class RpcServer {
     methodsHandlerInstance: Record<string, any>,
     port: number = this._defaultPort
   ) {
-    this._server.bindAsync(
+    this.server.bindAsync(
       `${this.host}:${port}`,
       grpc.ServerCredentials.createInsecure(),
       (err) => {
@@ -29,7 +29,7 @@ export class RpcServer {
           throw new Error(
             `Error occured while starting rpc server on ${this.host}:${port}`
           );
-        this._server.start();
+        this.server.start();
       }
     );
 
@@ -56,7 +56,7 @@ export class RpcServer {
     });
 
     const grpcImpl = this._convertToGrpcImplementation(implementations);
-    this._server.addService(loadApiService(service).service, grpcImpl);
+    this.server.addService(loadApiService(service).service, grpcImpl);
   }
 
   private _convertToGrpcImplementation(

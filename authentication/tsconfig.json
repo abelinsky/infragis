@@ -20,6 +20,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "../common/src/use-cases/application-service.ts"],
   "exclude": ["node_modules"]
 }

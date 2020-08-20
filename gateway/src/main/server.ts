@@ -14,25 +14,24 @@ import {
 } from '@infragis/common';
 import { GATEWAY_CONFIG } from '@/main/config';
 import { InversifyExpressServer } from 'inversify-express-utils';
-import { Server } from 'http';
 
 @injectable()
 export class GatewayServer {
-  private _server: InversifyExpressServer = this._expressServerFactory();
+  private expressServer: InversifyExpressServer = this.expressServerFactory();
 
   constructor(
     @inject(EXPRESS_SERVER_FACTORY)
-    private _expressServerFactory: ExpressServerFactory,
-    @inject(GLOBAL_CONFIG) private _globalConfig: IConfig,
-    @inject(GATEWAY_CONFIG) private _gatewayConfig: IConfig,
-    @inject(LOGGER_TYPE) private _logger: ILogger
+    private expressServerFactory: ExpressServerFactory,
+    @inject(GLOBAL_CONFIG) private globalConfig: IConfig,
+    @inject(GATEWAY_CONFIG) private gatewayConfig: IConfig,
+    @inject(LOGGER_TYPE) private logger: ILogger
   ) {
-    this._server.setConfig((app: express.Application) => {
+    this.expressServer.setConfig((app: express.Application) => {
       app.use(helmet());
       app.use(bodyParser.json());
     });
 
-    this._server.setErrorConfig((app) => {
+    this.expressServer.setErrorConfig((app) => {
       app.use(
         (
           err: any,
@@ -47,15 +46,15 @@ export class GatewayServer {
       );
     });
 
-    this._server
+    this.expressServer
       .build()
-      .listen(this._gatewayConfig.getNumber('gateway.port'), () => {
-        this._logger.info(
-          `  App is running on ${this._gatewayConfig.getNumber(
+      .listen(this.gatewayConfig.getNumber('gateway.port'), () => {
+        this.logger.info(
+          `  App is running on ${this.gatewayConfig.getNumber(
             'gateway.port'
-          )} port in ${this._globalConfig.get('global.environment')} mode`
+          )} port in ${this.globalConfig.get('global.environment')} mode`
         );
-        this._logger.info('  Press CTRL-C to stop\n');
+        this.logger.info('  Press CTRL-C to stop\n');
       });
   }
 }
