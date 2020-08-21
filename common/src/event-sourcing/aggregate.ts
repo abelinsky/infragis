@@ -1,11 +1,7 @@
 import { Id } from '../types';
 import { EventsStream } from './events-stream';
 import { StreamVersion } from './stream-version';
-import {
-  IDomainEvent,
-  EVENT_NAME_METADATA,
-  eventDeserializer,
-} from './domain-event';
+import { IDomainEvent, EVENT_NAME_METADATA, eventDeserializer } from './domain-event';
 import { EventName } from '../types';
 import { StoredSnapshot } from './stored-snapshot';
 import { StoredEvent } from './stored-event';
@@ -46,8 +42,7 @@ export abstract class Aggregate<TSerialized = Record<any, any>> {
    */
   protected apply(event: IDomainEvent): void {
     this.mutate(event);
-    if (!this.eventsStream)
-      this.eventsStream = EventsStream.create(this.id);
+    if (!this.eventsStream) this.eventsStream = EventsStream.create(this.id);
     this.eventsStream.addEvent(event, this.version);
   }
 
@@ -56,15 +51,10 @@ export abstract class Aggregate<TSerialized = Record<any, any>> {
    * instance version.
    * @param event Occured Domain Event.
    */
-  protected mutate(
-    event: IDomainEvent,
-    increasePersistedVersion = false
-  ): void {
+  protected mutate(event: IDomainEvent, duringReplay = false): void {
     // Get the event name from metadata. It has to be set
     // by @DomainEvent decorator
-    const eventName = EventName.create(
-      Reflect.getMetadata(EVENT_NAME_METADATA, event)
-    );
+    const eventName = EventName.create(Reflect.getMetadata(EVENT_NAME_METADATA, event));
 
     // Get event handler from `this` instance for the event.
     // The handler is set by @ApplyDomainEvent decorator.
@@ -74,7 +64,7 @@ export abstract class Aggregate<TSerialized = Record<any, any>> {
     }
 
     // Increase persisted version
-    if (increasePersistedVersion) this.persistedVersion.next();
+    if (duringReplay) this.persistedVersion.next();
 
     // Increase the version
     this.version.next();
@@ -97,10 +87,7 @@ export abstract class Aggregate<TSerialized = Record<any, any>> {
     });
   }
 
-  protected applySnapshot(
-    snapshot: StoredSnapshot<TSerialized>,
-    eventsAfter: StoredEvent[]
-  ): void {
+  protected applySnapshot(snapshot: StoredSnapshot<TSerialized>, eventsAfter: StoredEvent[]): void {
     this.deserialize(snapshot.data);
     this.version = StreamVersion.from(snapshot.version);
     this.persistedVersion = StreamVersion.from(snapshot.version);

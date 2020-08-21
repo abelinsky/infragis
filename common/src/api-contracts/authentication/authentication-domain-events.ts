@@ -8,12 +8,13 @@ export enum EventNames {
 export interface UserCreatedData {
   id: string;
   email: string;
+  encryptedPassword: string;
   createdAt: string;
 }
 
 export interface SignUpRequestedData {
   sessionId: string;
+  userId: string;
   email: string;
-  password: string;
   requestedAt: string;
 }

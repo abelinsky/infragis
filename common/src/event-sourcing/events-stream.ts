@@ -5,22 +5,20 @@ import { StreamVersion } from './stream-version';
 class StreamEvent {
   constructor(
     public readonly event: IDomainEvent,
+    /** Aggregate version after the event was applied */
     public readonly version: StreamVersion
   ) {}
 }
 
 export class EventsStream {
-  constructor(
-    public readonly aggregateId: Id,
-    private readonly events: StreamEvent[]
-  ) {}
+  constructor(public readonly aggregateId: Id, private readonly events: StreamEvent[]) {}
 
   static create(id: Id): EventsStream {
     return new EventsStream(id, []);
   }
 
-  addEvent(event: IDomainEvent, version: StreamVersion) {
-    this.events.push(new StreamEvent(event, version.copy()));
+  addEvent(event: IDomainEvent, aggregateVersion: StreamVersion) {
+    this.events.push(new StreamEvent(event, aggregateVersion.copy()));
   }
 
   toArray(): StreamEvent[] {

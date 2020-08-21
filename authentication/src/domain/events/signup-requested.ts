@@ -1,10 +1,11 @@
 import {
-  IDomainEvent,
-  DomainEvent,
   AuthenticationEvents,
+  DomainEvent,
   Email,
+  IDomainEvent,
   SessionId,
   Timestamp,
+  UserId,
 } from '@infragis/common';
 import { Session } from 'inspector';
 
@@ -12,30 +13,30 @@ import { Session } from 'inspector';
 export class SignUpRequested implements IDomainEvent {
   constructor(
     public readonly sessionId: SessionId,
+    public readonly userId: UserId,
     public readonly email: Email,
-    public readonly password: string,
     public readonly requestedAt: Timestamp
   ) {}
 
   serialize(): AuthenticationEvents.SignUpRequestedData {
     return {
       sessionId: this.sessionId.toString(),
+      userId: this.userId.toString(),
       email: this.email.toString(),
-      password: this.password,
       requestedAt: this.requestedAt.toString(),
     };
   }
 
   static deserialize({
     sessionId,
+    userId,
     email,
-    password,
     requestedAt,
   }: AuthenticationEvents.SignUpRequestedData) {
     return new SignUpRequested(
       SessionId.fromString(sessionId),
+      UserId.fromString(userId),
       Email.fromString(email),
-      password,
       Timestamp.fromString(requestedAt)
     );
   }

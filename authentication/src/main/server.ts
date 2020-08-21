@@ -23,7 +23,7 @@ export class AuthenticationServer implements AuthenticationCommands.Service {
   });
 
   @inject(EmailSignUp.USECASE_NAME)
-  private emailSignupUseCase: IUseCase<AuthenticationCommands.Service, EmailSignUp.UsecaseType>;
+  private emailSignupUseCase: IUseCase<AuthenticationCommands.Service, EmailSignUp.ServiceMethod>;
 
   constructor(
     @inject(GLOBAL_CONFIG) private globalConfig: IConfig,
@@ -33,11 +33,7 @@ export class AuthenticationServer implements AuthenticationCommands.Service {
   ) {}
 
   @RpcHandler(AuthenticationCommandsService)
-  async getEvents(
-    payload: GetEvents
-  ): Promise<{
-    events: StoredEvent[];
-  }> {
+  async getEvents(payload: GetEvents): Promise<{ events: StoredEvent[] }> {
     return new Promise((resolve, reject) => {
       resolve({ events: [] });
     });

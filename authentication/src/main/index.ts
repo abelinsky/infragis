@@ -10,24 +10,48 @@ if (process.env['global.environment'] === 'dev' || __DEBUG) {
   });
 } else require('module-alias/register');
 
-import { DI, GlobalConfig, GLOBAL_CONFIG, BaseLogger, LOGGER_TYPE } from '@infragis/common/';
+import {
+  DI,
+  GlobalConfig,
+  BaseLogger,
+  InMemoryEventStore,
+  InMemorySnaphotStore,
+  IN_MEMORY_EVENT_STORE_FACTORY,
+  IN_MEMORY_SNAPSHOT_STORE_FACTORY,
+  inMemoryEventStoreFactory,
+  inMemorySnapshotStoreFactory,
+  GLOBAL_CONFIG,
+  LOGGER_TYPE,
+} from '@infragis/common/';
 
 // rpc
 import { RpcServer, rpcServerFactory, RPC_SERVER_FACTORY } from '@infragis/common/';
 
-// use-cases
-import { EmailSignUp } from '../usecases';
-
 import { AuthenticationConfig, AUTHENTICATION_CONFIG } from '@/main/config';
 import { AuthenticationServer } from '@/main/server';
 
-DI.registerProviders(AuthenticationServer, RpcServer);
+// use-cases
+import { EmailSignUp } from '../usecases';
+
+// repositories
+import { InMemorySessionRepository, InMemoryUserRepository } from '@/infra';
+import { SESSION_REPOSITORY, USER_REPOSITORY } from '@/domain';
+
+DI.registerProviders(AuthenticationServer, RpcServer, InMemoryEventStore, InMemorySnaphotStore);
 
 // UseCases
 DI.registerIdentifiedProvider(EmailSignUp.USECASE_NAME, EmailSignUp.RequestEmailSignUp);
 
-DI.registerFactory(RPC_SERVER_FACTORY, rpcServerFactory);
+// Repositories
+DI.registerIdentifiedProvider(SESSION_REPOSITORY, InMemorySessionRepository);
+DI.registerIdentifiedProvider(USER_REPOSITORY, InMemoryUserRepository);
 
+// Factories
+DI.registerFactory(RPC_SERVER_FACTORY, rpcServerFactory);
+DI.registerFactory(IN_MEMORY_EVENT_STORE_FACTORY, inMemoryEventStoreFactory);
+DI.registerFactory(IN_MEMORY_SNAPSHOT_STORE_FACTORY, inMemorySnapshotStoreFactory);
+
+// Configs, utils
 DI.registerSingleton(GLOBAL_CONFIG, GlobalConfig);
 DI.registerSingleton(AUTHENTICATION_CONFIG, AuthenticationConfig);
 DI.registerSingleton(LOGGER_TYPE, BaseLogger);

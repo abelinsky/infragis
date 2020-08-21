@@ -1,3 +1,3 @@
 export * from './events';
 export * from './models';
-export * from './repos';
+export * from './repositories';

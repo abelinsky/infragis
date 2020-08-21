@@ -1,61 +1,65 @@
 import {
-  IUseCase,
-  AuthenticationCommands,
-  UserId,
-  ILogger,
-  LOGGER_TYPE,
-  SessionId,
-  Email,
-} from '@infragis/common';
-import { injectable, inject } from 'inversify';
-import {
   Session,
+  SessionRepository,
   User,
   UserRepository,
-  USER_REPOSITORY,
-  SnapshotRepository,
   SESSION_REPOSITORY,
+  USER_REPOSITORY,
 } from '@/domain';
-
-import { Timestamp } from '@infragis/common';
+import {
+  AuthenticationCommands,
+  Email,
+  IUseCase,
+  SessionId,
+  UserId,
+  Timestamp,
+  Password,
+  LOGGER_TYPE,
+  ILogger,
+} from '@infragis/common';
+import { inject, injectable } from 'inversify';
 
 export const USECASE_NAME: AuthenticationCommands.ServiceType = 'requestEmailSignUp';
-export type UsecaseType = Extract<AuthenticationCommands.ServiceType, typeof USECASE_NAME>;
+export type ServiceMethod = Extract<AuthenticationCommands.ServiceType, typeof USECASE_NAME>;
 
 @injectable()
-export class RequestEmailSignUp implements IUseCase<AuthenticationCommands.Service, UsecaseType> {
+export class RequestEmailSignUp implements IUseCase<AuthenticationCommands.Service, ServiceMethod> {
+  @inject(LOGGER_TYPE) logger: ILogger;
+
   constructor(
-    @inject(LOGGER_TYPE) private logger: ILogger,
     @inject(USER_REPOSITORY) private userRepository: UserRepository,
-    @inject(SESSION_REPOSITORY) private sessionRepository: SnapshotRepository<Session>
+    @inject(SESSION_REPOSITORY) private sessionRepository: SessionRepository
   ) {}
 
   execute = async (payload: AuthenticationCommands.RequestEmailSignUp): Promise<void> => {
+    this.logger.warn(`Use-case RequestEmailSignUp started with payload ${JSON.stringify(payload)}`);
+
+    const requestedAt = Timestamp.now();
     const { email, password } = payload;
 
-    const existingUser = await this.userRepository.getByEmail(email);
-
-    // TODO: Send userId to Session factory
-    const userId = existingUser
-      ? UserId.fromString(existingUser.aggregateId.toString())
-      : UserId.generate();
+    let user = await this.userRepository.getByEmail(email);
+    if (!user) {
+      const hashedPassword = await Password.fromString(password).hash();
+      user = User.create(
+        UserId.generate(),
+        Email.fromString(email),
+        hashedPassword,
+        Timestamp.now()
+      );
+      await this.userRepository.store(user);
+    }
 
     const sessionId = SessionId.generate();
     const session = Session.emailSignUp(
       sessionId,
+      user.aggregateId,
       Email.fromString(email),
-      password,
-      Timestamp.now()
+      requestedAt
     );
+    await this.sessionRepository.store(session);
 
-    await this.store(session);
+    this.logger.warn('Use-case RequestEmailSignUp completed.');
 
     // TODO: Create tokens
   };
-
-  private async store(session: Session): Promise<void> {
-    // TODO: Store events
-    // this.sessionRepository.get(session.aggregateId);
-    // TODO: Store snapshots
-  }
 }
