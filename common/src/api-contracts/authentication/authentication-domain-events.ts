@@ -1,7 +1,11 @@
-// Events Names
+import { EventTopics } from '../api-event-topics';
+
+/**
+ * Event names in format 'service.aggregate.eventName'.
+ */
 export enum EventNames {
-  SignUpRequested = 'authentication.session:signUpRequested',
-  UserCreated = 'authentication.user:created',
+  SignUpRequested = 'authentication.session.signUpRequested',
+  UserCreated = 'authentication.user.created',
 }
 
 // Events Data

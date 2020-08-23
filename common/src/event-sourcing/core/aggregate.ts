@@ -1,11 +1,11 @@
-import { Id } from '../types';
+import { Id } from '../../types';
 import { EventsStream } from './events-stream';
 import { StreamVersion } from './stream-version';
 import { IDomainEvent, EVENT_NAME_METADATA, eventDeserializer } from './domain-event';
-import { EventName } from '../types';
+import { EventName } from '../../types';
 import { StoredSnapshot } from './stored-snapshot';
 import { StoredEvent } from './stored-event';
-import { ReplayVersionMismatchException } from './replay-version-mismatch-exception';
+import { ReplayVersionMismatchException } from '../exceptions';
 
 export abstract class Aggregate<TSerialized = Record<any, any>> {
   protected abstract id: Id;
@@ -54,7 +54,7 @@ export abstract class Aggregate<TSerialized = Record<any, any>> {
   protected mutate(event: IDomainEvent, duringReplay = false): void {
     // Get the event name from metadata. It has to be set
     // by @DomainEvent decorator
-    const eventName = EventName.create(Reflect.getMetadata(EVENT_NAME_METADATA, event));
+    const eventName = EventName.fromString(Reflect.getMetadata(EVENT_NAME_METADATA, event));
 
     // Get event handler from `this` instance for the event.
     // The handler is set by @ApplyDomainEvent decorator.

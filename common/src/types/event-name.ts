@@ -2,43 +2,32 @@ import { ServiceException } from '../exceptions';
 import { RpcStatus } from '../rpc';
 
 export class EventName {
-  private check = new RegExp(/^[A-Z]+$/i);
-
   constructor(
-    public readonly name: string,
+    public readonly service: string,
     public readonly aggregate: string,
-    public readonly service?: string
-  ) {
-    if (!this.check.exec(name)) throw new InvalidEventName(name);
-    if (!this.check.exec(aggregate)) throw new InvalidEventName(name);
-    if (service && !this.check.exec(service))
-      throw new InvalidEventName(name);
-  }
+    public readonly eventName: string
+  ) {}
+
   /**
    * Factory for @param EventName instantiation.
-   * @param eventName name of the event: serviceName.aggregateName:method or aggregateName:method
+   * @param eventName Name of the event in the format: serviceName.aggregateName:method or aggregateName:method
    * @example
    *    authentication.session:signInRequested
    *    user:userCreated
    */
-  static create(eventName: string) {
-    const [namespace, name] = eventName.split(':');
-    const aggregate = namespace.includes('.')
-      ? namespace.substring(
-          namespace.lastIndexOf('.') + 1,
-          namespace.length
-        )
-      : namespace;
-    const service = namespace.includes('.')
-      ? namespace.substring(0, namespace.indexOf('.'))
-      : undefined;
-    return new EventName(name, aggregate, service);
+  static fromString(eventName: string): EventName {
+    const regexEventName = new RegExp(/^[A-Z]+.[A-Z]+.[A-Z]+/i);
+    if (!regexEventName.exec(eventName)) throw new InvalidEventName(eventName);
+    const [service, aggregate, event] = eventName.split('.');
+    return new EventName(service, aggregate, event);
   }
 
-  toString() {
-    return this.service
-      ? `${this.service}.${this.aggregate}:${this.name}`
-      : `${this.aggregate}:${this.name}`;
+  toString(): string {
+    return `${this.service}.${this.aggregate}:${this.eventName}`;
+  }
+
+  getTopic(): string {
+    return `${this.service}.events.${this.aggregate}`;
   }
 }
 

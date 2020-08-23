@@ -1,19 +1,23 @@
-import { EventStore } from './event-store';
-import { EventsStream } from './events-stream';
-import { StoredEvent } from './stored-event';
 import { inject, injectable, interfaces } from 'inversify';
-import { Id, EventId, Timestamp } from '../types';
-import { OptimisticConcurrencyControlException } from './optimistic-concurrency-control-exception';
-import { EVENT_NAME_METADATA } from './domain-event';
+import { EventId, Id, Timestamp } from '../../types';
+import { EVENT_NAME_METADATA } from '../core/domain-event';
+import { DOMAIN_EVENTS_PUBLISHER, IDomainEventsPublisher } from '../publishing';
+import { EventStore } from './event-store';
+import { EventsStream } from '../core/events-stream';
+import { OptimisticConcurrencyException } from '../exceptions';
+import { StoredEvent } from '../core/stored-event';
 
 @injectable()
 export class InMemoryEventStore implements EventStore {
-  topic!: string;
+  @inject(DOMAIN_EVENTS_PUBLISHER) domainEventsPublisher!: IDomainEventsPublisher;
 
   private events: StoredEvent[] = [];
   private sequence: number = 0;
 
-  async getEventsStream(aggregateId: string, after?: number | undefined): Promise<StoredEvent[]> {
+  async getEventsForAggregate(
+    aggregateId: string,
+    after?: number | undefined
+  ): Promise<StoredEvent[]> {
     return this.events
       .filter((event) => event.aggregateId === aggregateId)
       .filter((event) => (after ? event.version > after : true))
@@ -26,21 +30,23 @@ export class InMemoryEventStore implements EventStore {
       .sort((e1, e2) => e1.version - e2.version);
   }
 
-  async storeEvents(events: EventsStream, lastStoredVersion: number): Promise<void> {
+  async storeEvents(events: EventsStream, expectedVersion: number): Promise<void> {
     if (!events.toArray().length) return;
 
     // Check for the Optimistic concurrency control issues.
     const lastEvent = await this.getLastEvent(events.aggregateId);
-    if (lastEvent && lastEvent.version !== lastStoredVersion) {
-      throw new OptimisticConcurrencyControlException(
-        this.topic,
+
+    if (lastEvent && lastEvent.version !== expectedVersion) {
+      throw new OptimisticConcurrencyException(
+        lastEvent.name,
         events.aggregateId.toString(),
-        lastStoredVersion,
+        expectedVersion,
         lastEvent.sequence,
         lastEvent.eventId
       );
     }
 
+    // Store events
     const inserts = events.toArray().map((e) => {
       this.sequence++;
       const storedEvent: StoredEvent = {
@@ -54,11 +60,10 @@ export class InMemoryEventStore implements EventStore {
       };
       return storedEvent;
     });
-
     inserts.forEach((e) => this.events.push(e));
 
-    // TODO: dispatch events
-    //await this.dispatcher.dispatch(this.topic, inserts);
+    // Publish events
+    this.domainEventsPublisher.publish(inserts);
   }
 
   private async getLastEvent(aggregateId: Id): Promise<StoredEvent> {
@@ -67,14 +72,3 @@ export class InMemoryEventStore implements EventStore {
       .sort((first, second) => second.version - first.version)[0];
   }
 }
-
-export type InMemoryEventStoreFactory = (options: { topic: string }) => InMemoryEventStore;
-export const inMemoryEventStoreFactory = (
-  context: interfaces.Context
-): InMemoryEventStoreFactory => {
-  return ({ topic }) => {
-    const store = context.container.get(InMemoryEventStore);
-    store.topic = topic;
-    return store;
-  };
-};

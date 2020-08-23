@@ -1,7 +1,7 @@
 import { interfaces, injectable } from 'inversify';
 import { SnapshotStore } from './snapshot-store';
-import { StoredSnapshot } from './stored-snapshot';
-import { Id } from '../types';
+import { StoredSnapshot } from '../core/stored-snapshot';
+import { Id } from '../../types';
 
 @injectable()
 export class InMemorySnaphotStore implements SnapshotStore {
@@ -15,9 +15,3 @@ export class InMemorySnaphotStore implements SnapshotStore {
     this.snapshots[snapshot.aggregateId] = snapshot;
   }
 }
-
-export type InMemorySnapshotStoreFactory = () => InMemorySnaphotStore;
-
-export const inMemorySnapshotStoreFactory = (
-  context: interfaces.Context
-): InMemorySnapshotStoreFactory => () => context.container.get(InMemorySnaphotStore);

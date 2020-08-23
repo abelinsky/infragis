@@ -32,33 +32,25 @@ export class RequestEmailSignUp implements IUseCase<AuthenticationCommands.Servi
   ) {}
 
   execute = async (payload: AuthenticationCommands.RequestEmailSignUp): Promise<void> => {
-    this.logger.warn(`Use-case RequestEmailSignUp started with payload ${JSON.stringify(payload)}`);
+    this.logger.info(`Use-case RequestEmailSignUp started with payload ${JSON.stringify(payload)}`);
 
     const requestedAt = Timestamp.now();
     const { email, password } = payload;
 
-    let user = await this.userRepository.getByEmail(email);
-    if (!user) {
+    let userId = await this.userRepository.getId(email);
+
+    if (!userId) {
+      userId = UserId.generate();
       const hashedPassword = await Password.fromString(password).hash();
-      user = User.create(
-        UserId.generate(),
-        Email.fromString(email),
-        hashedPassword,
-        Timestamp.now()
-      );
+      const user = User.create(userId, Email.fromString(email), hashedPassword, Timestamp.now());
       await this.userRepository.store(user);
     }
 
     const sessionId = SessionId.generate();
-    const session = Session.emailSignUp(
-      sessionId,
-      user.aggregateId,
-      Email.fromString(email),
-      requestedAt
-    );
+    const session = Session.emailSignUp(sessionId, userId, Email.fromString(email), requestedAt);
     await this.sessionRepository.store(session);
 
-    this.logger.warn('Use-case RequestEmailSignUp completed.');
+    this.logger.info('Use-case RequestEmailSignUp completed.');
 
     // TODO: Create tokens
   };

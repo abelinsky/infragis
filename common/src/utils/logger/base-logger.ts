@@ -8,6 +8,10 @@ export class BaseLogger implements ILogger {
     this.info('LOGGER CREATED');
   }
 
+  debug(...text: string[]): void {
+    console.debug(text);
+  }
+
   error(err: string | Error): void {
     console.error(err);
   }

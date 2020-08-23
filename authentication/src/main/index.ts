@@ -16,16 +16,20 @@ import {
   BaseLogger,
   InMemoryEventStore,
   InMemorySnaphotStore,
-  IN_MEMORY_EVENT_STORE_FACTORY,
-  IN_MEMORY_SNAPSHOT_STORE_FACTORY,
-  inMemoryEventStoreFactory,
-  inMemorySnapshotStoreFactory,
   GLOBAL_CONFIG,
   LOGGER_TYPE,
 } from '@infragis/common/';
 
 // rpc
 import { RpcServer, rpcServerFactory, RPC_SERVER_FACTORY } from '@infragis/common/';
+
+// Event Sourcing
+import {
+  DOMAIN_EVENTS_PUBLISHER,
+  DomainEventsPublisher,
+  DOMAIN_EVENTS_LISTENER,
+  DomainEventsListener,
+} from '@infragis/common';
 
 import { AuthenticationConfig, AUTHENTICATION_CONFIG } from '@/main/config';
 import { AuthenticationServer } from '@/main/server';
@@ -34,10 +38,17 @@ import { AuthenticationServer } from '@/main/server';
 import { EmailSignUp } from '../usecases';
 
 // repositories
-import { InMemorySessionRepository, InMemoryUserRepository } from '@/infra';
+import { InMemorySessionRepository, InMemoryUserRepository } from '@/infrastructure';
+import { InMemoryUserProjector } from '@/infrastructure/projectors';
 import { SESSION_REPOSITORY, USER_REPOSITORY } from '@/domain';
 
 DI.registerProviders(AuthenticationServer, RpcServer, InMemoryEventStore, InMemorySnaphotStore);
+
+// Event Sourcing
+// TODO: Explore if possible to inject Singletons ClassName rather than a label.
+DI.registerSingleton(DOMAIN_EVENTS_PUBLISHER, DomainEventsPublisher);
+DI.registerSingleton(DOMAIN_EVENTS_LISTENER, DomainEventsListener);
+DI.registerSingleton(InMemoryUserProjector, InMemoryUserProjector);
 
 // UseCases
 DI.registerIdentifiedProvider(EmailSignUp.USECASE_NAME, EmailSignUp.RequestEmailSignUp);
@@ -48,8 +59,6 @@ DI.registerIdentifiedProvider(USER_REPOSITORY, InMemoryUserRepository);
 
 // Factories
 DI.registerFactory(RPC_SERVER_FACTORY, rpcServerFactory);
-DI.registerFactory(IN_MEMORY_EVENT_STORE_FACTORY, inMemoryEventStoreFactory);
-DI.registerFactory(IN_MEMORY_SNAPSHOT_STORE_FACTORY, inMemorySnapshotStoreFactory);
 
 // Configs, utils
 DI.registerSingleton(GLOBAL_CONFIG, GlobalConfig);

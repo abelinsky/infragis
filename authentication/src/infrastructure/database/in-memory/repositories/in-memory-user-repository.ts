@@ -1,37 +1,40 @@
-import { inject, injectable } from 'inversify';
-import { UserRepository } from '@/domain/repositories';
 import { User } from '@/domain';
+import { UserRepository } from '@/domain/repositories';
+import { InMemoryUserProjector } from '@/infrastructure/projectors';
 import {
-  IN_MEMORY_EVENT_STORE_FACTORY,
-  IN_MEMORY_SNAPSHOT_STORE_FACTORY,
-  InMemoryEventStoreFactory,
-  InMemorySnapshotStoreFactory,
+  ILogger,
   InMemoryEventStore,
   InMemorySnaphotStore,
+  IProjector,
   LOGGER_TYPE,
-  ILogger,
+  StoredEvent,
+  UserId,
 } from '@infragis/common';
+import { inject, injectable } from 'inversify';
 
 @injectable()
 export class InMemoryUserRepository implements UserRepository {
   private readonly snapshotStoreInterval = 50;
 
-  // TODO: Fix topics
-  private eventStore: InMemoryEventStore = this.eventStoreFactory({
-    topic: 'Users',
-  });
-  private snapshotStore: InMemorySnaphotStore = this.snaphotStoreFactory();
-
   constructor(
-    @inject(IN_MEMORY_EVENT_STORE_FACTORY) private eventStoreFactory: InMemoryEventStoreFactory,
-    @inject(IN_MEMORY_SNAPSHOT_STORE_FACTORY)
-    private snaphotStoreFactory: InMemorySnapshotStoreFactory,
+    @inject(InMemoryEventStore) private eventStore: InMemoryEventStore,
+    @inject(InMemorySnaphotStore) private snapshotStore: InMemorySnaphotStore,
+    // TODO: Fix
+    @inject(InMemoryUserProjector) private userProjector: InMemoryUserProjector,
     @inject(LOGGER_TYPE) private logger: ILogger
   ) {}
 
-  async getByEmail(email: string): Promise<User | undefined> {
-    // TODO: Fix
-    return undefined;
+  async getId(email: string): Promise<UserId | undefined> {
+    const id = await this.userProjector.getId(email);
+    return Promise.resolve(id);
+  }
+
+  // getEvents(from: number): Promise<StoredEvent[]> {
+  //   return this.eventStore.getEvents(from);
+  // }
+
+  async userExists(email: string): Promise<boolean> {
+    return this.userProjector.userExists(email);
   }
 
   async store(user: User): Promise<void> {

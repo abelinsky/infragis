@@ -1,4 +1,4 @@
-import { Id } from '../types';
+import { Id } from '../../types';
 import { IDomainEvent } from './domain-event';
 import { StreamVersion } from './stream-version';
 

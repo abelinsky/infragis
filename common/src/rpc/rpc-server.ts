@@ -5,7 +5,7 @@ import { ApiService, loadApiService } from '../api-contracts';
 import { Context } from 'express-validator/src/context';
 import { RPC_HANDLERS } from './rpc-handler';
 import asyncRetry from 'async-retry';
-import { EventSourcingErrorNames } from '../event-sourcing/error-names';
+import { EventSourcingErrorNames } from '../event-sourcing/exceptions/exceptions-names';
 import { RpcStatus } from './rpc-status';
 
 @injectable()
@@ -25,23 +25,15 @@ export class RpcServer {
       `${this.host}:${port}`,
       grpc.ServerCredentials.createInsecure(),
       (err) => {
-        if (err)
-          throw new Error(
-            `Error occured while starting rpc server on ${this.host}:${port}`
-          );
+        if (err) throw new Error(`Error occured while starting rpc server on ${this.host}:${port}`);
         this.server.start();
       }
     );
 
-    services.forEach((service) =>
-      this._addService(service, methodsHandlerInstance)
-    );
+    services.forEach((service) => this._addService(service, methodsHandlerInstance));
   }
 
-  private _addService(
-    service: ApiService,
-    methodsHandler: Record<string, any>
-  ) {
+  private _addService(service: ApiService, methodsHandler: Record<string, any>) {
     const methods = Reflect.getMetadata(RPC_HANDLERS, service);
     const implementations: Record<string, any> = {};
 
@@ -59,15 +51,11 @@ export class RpcServer {
     this.server.addService(loadApiService(service).service, grpcImpl);
   }
 
-  private _convertToGrpcImplementation(
-    implementation: any
-  ): grpc.UntypedServiceImplementation {
+  private _convertToGrpcImplementation(implementation: any): grpc.UntypedServiceImplementation {
     const grpcImpl: grpc.UntypedServiceImplementation = {};
     Object.keys(implementation).forEach((key) => {
       const handler = implementation[key];
-      (grpcImpl as any)[key] = this._convertPromiseToCallback(
-        handler as any
-      );
+      (grpcImpl as any)[key] = this._convertPromiseToCallback(handler as any);
     });
     return grpcImpl;
   }
@@ -81,11 +69,7 @@ export class RpcServer {
           async (bail) => {
             const response = await handler(call.request).catch((err) => {
               // Retry if optimistic concurrency control has been thrown
-              if (
-                err.name &&
-                err.name ===
-                  EventSourcingErrorNames.OptimisticConcurrencyIssue
-              ) {
+              if (err.name && err.name === EventSourcingErrorNames.OptimisticConcurrencyIssue) {
                 this._logger.warn('Concurrency issue, retry again...');
                 throw err;
               }
@@ -132,9 +116,7 @@ export type RpcServerFactory = (options: {
   port?: number;
 }) => RpcServer;
 
-export const rpcServerFactory = (
-  context: interfaces.Context
-): RpcServerFactory => {
+export const rpcServerFactory = (context: interfaces.Context): RpcServerFactory => {
   return ({ services, methodsHandlerInstance, port }) => {
     const server = context.container.get(RpcServer);
     server.initialize(services, methodsHandlerInstance, port);

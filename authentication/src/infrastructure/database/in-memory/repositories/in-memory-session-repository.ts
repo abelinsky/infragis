@@ -1,31 +1,15 @@
 import { Session } from '@/domain';
 import { SessionRepository } from '@/domain/repositories';
 import { inject, injectable } from 'inversify';
-import {
-  IN_MEMORY_EVENT_STORE_FACTORY,
-  IN_MEMORY_SNAPSHOT_STORE_FACTORY,
-  InMemoryEventStoreFactory,
-  InMemorySnapshotStoreFactory,
-  InMemoryEventStore,
-  InMemorySnaphotStore,
-  LOGGER_TYPE,
-  ILogger,
-} from '@infragis/common';
+import { InMemoryEventStore, InMemorySnaphotStore, LOGGER_TYPE, ILogger } from '@infragis/common';
 
 @injectable()
 export class InMemorySessionRepository implements SessionRepository {
   private readonly snapshotStoreInterval = 50;
 
-  // TODO: Fix topics
-  private eventStore: InMemoryEventStore = this.eventStoreFactory({
-    topic: 'Sessions',
-  });
-  private snapshotStore: InMemorySnaphotStore = this.snaphotStoreFactory();
-
   constructor(
-    @inject(IN_MEMORY_EVENT_STORE_FACTORY) private eventStoreFactory: InMemoryEventStoreFactory,
-    @inject(IN_MEMORY_SNAPSHOT_STORE_FACTORY)
-    private snaphotStoreFactory: InMemorySnapshotStoreFactory,
+    @inject(InMemoryEventStore) private eventStore: InMemoryEventStore,
+    @inject(InMemorySnaphotStore) private snapshotStore: InMemorySnaphotStore,
     @inject(LOGGER_TYPE) private logger: ILogger
   ) {}
 

@@ -1,7 +1,7 @@
-import { ServiceException } from '../exceptions';
-import { RpcStatus } from '../rpc';
-import { StoredEvent } from './stored-event';
-import { StreamVersion } from './stream-version';
+import { ServiceException } from '../../exceptions';
+import { RpcStatus } from '../../rpc';
+import { StoredEvent } from '../core/stored-event';
+import { StreamVersion } from '../core/stream-version';
 
 export class ReplayVersionMismatchException extends ServiceException {
   code: RpcStatus = RpcStatus.INTERNAL;
