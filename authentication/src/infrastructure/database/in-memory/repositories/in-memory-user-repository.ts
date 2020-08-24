@@ -8,7 +8,7 @@ import {
   InMemoryStore,
 } from '@infragis/common';
 import { User } from '@/domain';
-import { UserRepository } from '@/domain/repositories';
+import { UserRepository } from '@/domain';
 import { IN_MEMORY_USERS_STORE } from '@/infrastructure/constants';
 
 @injectable()

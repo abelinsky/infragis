@@ -36,7 +36,8 @@ import { AuthenticationConfig, AUTHENTICATION_CONFIG } from '@/main/config';
 import { AuthenticationServer } from '@/main/server';
 
 // use-cases
-import { EmailSignUp } from '../application';
+import { EmailSignUp } from '@/application';
+// import { UserProjectionDaemon } from '@/application';
 
 // repositories
 import {
@@ -49,6 +50,9 @@ import { InMemoryUserProjector, DOMESTIC_USER_PROJECTOR } from '@/infrastructure
 import { SESSION_REPOSITORY, USER_REPOSITORY } from '@/domain';
 
 DI.registerProviders(AuthenticationServer, RpcServer, InMemoryEventStore, InMemorySnaphotStore);
+
+// Register Daemons
+// DI.registerProviders(UserProjectionDaemon);
 
 // Event Sourcing
 // TODO: Explore if possible to inject Singletons ClassName rather than a label.

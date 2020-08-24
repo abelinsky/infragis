@@ -13,6 +13,11 @@ export class RpcServer {
   private server = new grpc.Server();
   private readonly _defaultPort = 40001;
   private readonly host = '0.0.0.0';
+  private isStarted = false;
+
+  get started() {
+    return this.isStarted;
+  }
 
   constructor(@inject(LOGGER_TYPE) private _logger: ILogger) {}
 
@@ -27,10 +32,20 @@ export class RpcServer {
       (err) => {
         if (err) throw new Error(`Error occured while starting rpc server on ${this.host}:${port}`);
         this.server.start();
+        this.isStarted = true;
       }
     );
 
     services.forEach((service) => this._addService(service, methodsHandlerInstance));
+  }
+
+  disconnect() {
+    return new Promise((resolve) => {
+      this.server.tryShutdown((err) => {
+        if (err) this.server.forceShutdown();
+        resolve();
+      });
+    });
   }
 
   private _addService(service: ApiService, methodsHandler: Record<string, any>) {

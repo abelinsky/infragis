@@ -1,6 +1,13 @@
 import { injectable } from 'inversify';
 
-import { ILogger } from './contracts/ilogger';
+export interface ILogger {
+  error: (err: Error | string) => void;
+  info: (...text: string[]) => void;
+  warn: (...text: string[]) => void;
+  debug: (...text: string[]) => void;
+}
+
+export const LOGGER_TYPE = Symbol.for('ILogger');
 
 @injectable()
 export class BaseLogger implements ILogger {

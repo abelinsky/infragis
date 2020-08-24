@@ -1,22 +1,23 @@
-import { injectable, inject } from 'inversify';
-import {
-  RpcServer,
-  RpcHandler,
-  RPC_SERVER_FACTORY,
-  RpcServerFactory,
-  GetEvents,
-  StoredEvent,
-  IProjector,
-} from '@infragis/common';
-import { IConfig, LOGGER_TYPE, GLOBAL_CONFIG, ILogger } from '@infragis/common';
 import { AUTHENTICATION_CONFIG } from '@/main/config';
+import {
+  DI,
+  GetEvents,
+  RPC_SERVER_FACTORY,
+  RpcHandler,
+  RpcServer,
+  RpcServerFactory,
+  ServiceServer,
+  StoredEvent,
+} from '@infragis/common';
+import { GLOBAL_CONFIG, IConfig, ILogger, LOGGER_TYPE } from '@infragis/common';
 import { AuthenticationCommands, AuthenticationCommandsService } from '@infragis/common';
-import { EmailSignUp } from '../application';
 import { IUseCase } from '@infragis/common';
-import { DOMESTIC_USER_PROJECTOR } from '@/infrastructure';
+import { inject, injectable } from 'inversify';
+
+import { EmailSignUp } from '../application';
 
 @injectable()
-export class AuthenticationServer implements AuthenticationCommands.Service {
+export class AuthenticationServer extends ServiceServer implements AuthenticationCommands.Service {
   private rpcServer: RpcServer = this.rpcServerFactory({
     services: [AuthenticationCommandsService],
     methodsHandlerInstance: this,
@@ -29,13 +30,14 @@ export class AuthenticationServer implements AuthenticationCommands.Service {
     @inject(GLOBAL_CONFIG) private globalConfig: IConfig,
     @inject(AUTHENTICATION_CONFIG) private gatewayConfig: IConfig,
     @inject(LOGGER_TYPE) private logger: ILogger,
-    @inject(RPC_SERVER_FACTORY) private rpcServerFactory: RpcServerFactory,
-    @inject(DOMESTIC_USER_PROJECTOR) private userProjector: IProjector
-  ) {}
+    @inject(RPC_SERVER_FACTORY) private rpcServerFactory: RpcServerFactory
+  ) {
+    super(DI.getContainer());
+  }
 
   @RpcHandler(AuthenticationCommandsService)
   async getEvents(payload: GetEvents): Promise<{ events: StoredEvent[] }> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       resolve({ events: [] });
     });
   }
@@ -43,5 +45,13 @@ export class AuthenticationServer implements AuthenticationCommands.Service {
   @RpcHandler(AuthenticationCommandsService)
   async requestEmailSignUp(payload: AuthenticationCommands.RequestEmailSignUp): Promise<void> {
     await this.emailSignupUseCase.execute(payload);
+  }
+
+  async handleShutdown(): Promise<void> {
+    await this.rpcServer.disconnect();
+  }
+
+  async healthcheck(): Promise<boolean> {
+    return this.rpcServer.started;
   }
 }

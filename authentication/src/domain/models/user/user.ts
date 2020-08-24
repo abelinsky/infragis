@@ -8,7 +8,7 @@ import {
   ApplyDomainEvent,
   Password,
 } from '@infragis/common';
-import { UserCreated } from '../events';
+import { UserCreated } from './user-created';
 
 export interface SerializedUser {
   id: string;

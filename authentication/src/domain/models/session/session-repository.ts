@@ -1,4 +1,4 @@
-import { Session } from '../models';
+import { Session } from '..';
 
 export interface SessionRepository {
   /**

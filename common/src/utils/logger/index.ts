@@ -1,2 +1,1 @@
-export * from './contracts/ilogger';
-export * from './base-logger';
+export * from './logger';

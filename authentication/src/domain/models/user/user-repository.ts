@@ -1,5 +1,5 @@
 import { StoredEvent } from '@infragis/common';
-import { User } from '../models';
+import { User } from '..';
 import { UserId } from '@infragis/common';
 
 export interface UserRepository {

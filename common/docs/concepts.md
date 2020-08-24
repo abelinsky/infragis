@@ -1,0 +1,1 @@
+Therefore, the application layer level is where you should have domain event handlers triggering actions when a domain event is raised. There can be several handlers for the same domain event in the Application Layer, one handler can solve consistency between aggregates and another handler can publish an integration event, so other microservices can do something with it.

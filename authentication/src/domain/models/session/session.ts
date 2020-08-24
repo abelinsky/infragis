@@ -1,5 +1,5 @@
 import { Aggregate, SessionId, Email, Timestamp, UserId, ApplyDomainEvent } from '@infragis/common';
-import { SignUpRequested } from '../events/signup-requested';
+import { SignUpRequested } from './signup-requested';
 
 export class SerializedSession {
   id: string;

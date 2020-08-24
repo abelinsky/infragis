@@ -1,5 +1,5 @@
 import { Session } from '@/domain';
-import { SessionRepository } from '@/domain/repositories';
+import { SessionRepository } from '@/domain';
 import { inject, injectable } from 'inversify';
 import { InMemoryEventStore, InMemorySnaphotStore, LOGGER_TYPE, ILogger } from '@infragis/common';
 
