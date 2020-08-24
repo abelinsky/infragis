@@ -29,17 +29,23 @@ import {
   DomainEventsPublisher,
   DOMAIN_EVENTS_LISTENER,
   DomainEventsListener,
+  InMemoryStore,
 } from '@infragis/common';
 
 import { AuthenticationConfig, AUTHENTICATION_CONFIG } from '@/main/config';
 import { AuthenticationServer } from '@/main/server';
 
 // use-cases
-import { EmailSignUp } from '../usecases';
+import { EmailSignUp } from '../application';
 
 // repositories
-import { InMemorySessionRepository, InMemoryUserRepository } from '@/infrastructure';
-import { InMemoryUserProjector } from '@/infrastructure/projectors';
+import {
+  InMemorySessionRepository,
+  InMemoryUserRepository,
+  IN_MEMORY_USERS_STORE,
+} from '@/infrastructure';
+
+import { InMemoryUserProjector, DOMESTIC_USER_PROJECTOR } from '@/infrastructure';
 import { SESSION_REPOSITORY, USER_REPOSITORY } from '@/domain';
 
 DI.registerProviders(AuthenticationServer, RpcServer, InMemoryEventStore, InMemorySnaphotStore);
@@ -49,9 +55,13 @@ DI.registerProviders(AuthenticationServer, RpcServer, InMemoryEventStore, InMemo
 DI.registerSingleton(DOMAIN_EVENTS_PUBLISHER, DomainEventsPublisher);
 DI.registerSingleton(DOMAIN_EVENTS_LISTENER, DomainEventsListener);
 DI.registerSingleton(InMemoryUserProjector, InMemoryUserProjector);
+DI.registerSingleton(IN_MEMORY_USERS_STORE, InMemoryStore);
 
 // UseCases
 DI.registerIdentifiedProvider(EmailSignUp.USECASE_NAME, EmailSignUp.RequestEmailSignUp);
+
+// Projectors
+DI.registerIdentifiedProvider(DOMESTIC_USER_PROJECTOR, InMemoryUserProjector);
 
 // Repositories
 DI.registerIdentifiedProvider(SESSION_REPOSITORY, InMemorySessionRepository);

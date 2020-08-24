@@ -1,9 +1,9 @@
-import { StoredEvent, Aggregate } from '../core';
 import { injectable, inject, postConstruct } from 'inversify';
-import { DOMAIN_EVENTS_LISTENER, IDomainEventsListener } from './domain-events-listener';
-import { DomainEventClass, EVENT_NAME_METADATA } from '../core';
-import { EventName } from '../../types';
 import { Unsubscribable } from 'rxjs';
+import { Class } from 'utility-types';
+import { DOMAIN_EVENTS_LISTENER, IDomainEventsListener } from './domain-events-listener';
+import { DomainEventClass, EVENT_NAME_METADATA, StoredEvent, Aggregate } from '../core';
+import { EventName } from '../../types';
 
 @injectable()
 export abstract class DomainEventsHandler {
@@ -13,7 +13,7 @@ export abstract class DomainEventsHandler {
   /**
    * If defined, this handler will listen to the events in this type of aggregates.
    */
-  abstract aggregateClass: typeof Aggregate | undefined = undefined;
+  abstract aggregateClass: Class<Aggregate> | undefined;
 
   @postConstruct()
   initialize() {

@@ -1,41 +1,47 @@
-import {SerializedUser, User} from '@/domain';
-import {USER_REPOSITORY, UserRepository} from '@/domain/repositories';
-import {Aggregate, AuthenticationEvents, DomesticMemoryProjector, ILogger, InMemoryEventStore, LOGGER_TYPE, ProjectionHandler, StoredEvent, UserId,} from '@infragis/common';
-import {inject, injectable, postConstruct} from 'inversify';
+import { inject, injectable, postConstruct } from 'inversify';
+import { Class } from 'utility-types';
+import {
+  Aggregate,
+  AuthenticationEvents,
+  DomesticProjector,
+  InMemoryEventStore,
+  ProjectionHandler,
+  StoredEvent,
+  InMemoryStore,
+} from '@infragis/common';
+import { User } from '@/domain';
+import { IN_MEMORY_USERS_STORE } from '../constants';
 
 @injectable()
-export class InMemoryUserProjector extends DomesticMemoryProjector {
-  // TODO: logger is private in Projector?!
-  @inject(LOGGER_TYPE) logging: ILogger;
-
-  // TODO: aggregateClass = User does not work
-  aggregateClass: typeof Aggregate|undefined = undefined;
+export class InMemoryUserProjector extends DomesticProjector {
+  aggregateClass: Class<Aggregate> | undefined = User;
 
   @inject(InMemoryEventStore) private eventStore: InMemoryEventStore;
+  @inject(IN_MEMORY_USERS_STORE) usersStore: InMemoryStore;
+
+  private position = 0;
+  protected projection: Record<any, any> = {};
+
+  async getPosition(): Promise<number> {
+    return this.position;
+  }
+
+  async increasePosition(): Promise<void> {
+    this.position++;
+  }
 
   getEvents(from: number): Promise<StoredEvent[]> {
     return this.eventStore.getEvents(from);
   }
 
-  async userExists(email: string): Promise<boolean> {
-    return !!this.projection[email];
-  }
-
-  async getId(email: string): Promise<UserId|undefined> {
-    await this.replay();
-    if (!this.projection[email]) return undefined;
-    return Promise.resolve(UserId.fromString(this.projection[email].id));
-  }
-
   @ProjectionHandler(AuthenticationEvents.EventNames.UserCreated)
-  async created({aggregateId,
-                 data}: StoredEvent<AuthenticationEvents.UserCreatedData>) {
-    this.logging.info(
-        `Received in InMemoryUserProjector: ${JSON.stringify(data)}`);
+  async created({ aggregateId, data }: StoredEvent<AuthenticationEvents.UserCreatedData>) {
+    this.logger.info(`Received in InMemoryUserProjector: ${JSON.stringify(data)}`);
 
     const userDocument = {
       id: aggregateId,
     };
-    this.projection = {...this.projection, [data.email]: userDocument};
+
+    this.usersStore.set(data.email, userDocument);
   }
 }

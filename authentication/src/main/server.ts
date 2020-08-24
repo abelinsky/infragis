@@ -3,17 +3,17 @@ import {
   RpcServer,
   RpcHandler,
   RPC_SERVER_FACTORY,
-  rpcServerFactory,
   RpcServerFactory,
-  GetEventsCommand,
   GetEvents,
   StoredEvent,
+  IProjector,
 } from '@infragis/common';
 import { IConfig, LOGGER_TYPE, GLOBAL_CONFIG, ILogger } from '@infragis/common';
 import { AUTHENTICATION_CONFIG } from '@/main/config';
 import { AuthenticationCommands, AuthenticationCommandsService } from '@infragis/common';
-import { EmailSignUp } from '../usecases';
+import { EmailSignUp } from '../application';
 import { IUseCase } from '@infragis/common';
+import { DOMESTIC_USER_PROJECTOR } from '@/infrastructure';
 
 @injectable()
 export class AuthenticationServer implements AuthenticationCommands.Service {
@@ -29,7 +29,8 @@ export class AuthenticationServer implements AuthenticationCommands.Service {
     @inject(GLOBAL_CONFIG) private globalConfig: IConfig,
     @inject(AUTHENTICATION_CONFIG) private gatewayConfig: IConfig,
     @inject(LOGGER_TYPE) private logger: ILogger,
-    @inject(RPC_SERVER_FACTORY) private rpcServerFactory: RpcServerFactory
+    @inject(RPC_SERVER_FACTORY) private rpcServerFactory: RpcServerFactory,
+    @inject(DOMESTIC_USER_PROJECTOR) private userProjector: IProjector
   ) {}
 
   @RpcHandler(AuthenticationCommandsService)

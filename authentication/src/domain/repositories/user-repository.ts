@@ -4,13 +4,6 @@ import { UserId } from '@infragis/common';
 
 export interface UserRepository {
   /**
-   * Checks whether the user exists.
-   * @param email User's unique email.
-   * @returns @param User instance.
-   */
-  userExists(email: string): Promise<boolean>;
-
-  /**
    * Gets Id for given email.
    * @param email User's email.
    */

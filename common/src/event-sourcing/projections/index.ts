@@ -1,2 +1,2 @@
-export * from './domestic-in-memory-projector';
 export * from './projector';
+export * from './domestic-projector';

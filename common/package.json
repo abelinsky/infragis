@@ -1,6 +1,6 @@
 {
   "name": "@infragis/common",
-  "version": "0.0.84",
+  "version": "0.0.87",
   "description": "Common package of Infragis platform",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -33,6 +33,7 @@
     "rxjs": "^6.6.2",
     "sanitize-html": "^1.27.3",
     "shortid": "^2.2.15",
+    "utility-types": "^3.10.0",
     "uuid": "^8.3.0"
   },
   "devDependencies": {

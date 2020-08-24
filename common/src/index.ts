@@ -25,3 +25,4 @@ export * from './rpc';
 export * from './types';
 export * from './utils';
 export * from './use-cases';
+export * from './persistence';
