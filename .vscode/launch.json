@@ -18,7 +18,8 @@
       "smartStep": true,
       "internalConsoleOptions": "openOnSessionStart",
       "env": {
-        "global.environment": "dev"
+        "global.environment": "dev",
+        "global.kafka.brokers": "kafka:9092"
       }
     },
     {

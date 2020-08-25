@@ -2,9 +2,7 @@ import 'reflect-metadata';
 import moduleAlias from 'module-alias';
 import path from 'path';
 
-const __DEBUG = true;
-
-if (process.env['global.environment'] === 'dev' || __DEBUG) {
+if (process.env['global.environment'] === 'dev' || !process.env['global.environment']) {
   moduleAlias.addAliases({
     '@': path.resolve(__dirname, '..'),
   });
@@ -18,6 +16,11 @@ import {
   InMemorySnaphotStore,
   GLOBAL_CONFIG,
   LOGGER_TYPE,
+  NOTIFICATION_PRODUCER,
+  KAFKA_NOTIFICATION_PRODUCER_FACTORY,
+  KafkaNotificationProducer,
+  kafkaNotificationProducerFactory,
+  KafkaNotificationConsumer,
 } from '@infragis/common/';
 
 // rpc
@@ -37,7 +40,6 @@ import { AuthenticationServer } from '@/main/server';
 
 // use-cases
 import { EmailSignUp } from '@/application';
-// import { UserProjectionDaemon } from '@/application';
 
 // repositories
 import {
@@ -51,15 +53,14 @@ import { SESSION_REPOSITORY, USER_REPOSITORY } from '@/domain';
 
 DI.registerProviders(AuthenticationServer, RpcServer, InMemoryEventStore, InMemorySnaphotStore);
 
-// Register Daemons
-// DI.registerProviders(UserProjectionDaemon);
-
 // Event Sourcing
 // TODO: Explore if possible to inject Singletons ClassName rather than a label.
 DI.registerSingleton(DOMAIN_EVENTS_PUBLISHER, DomainEventsPublisher);
-DI.registerSingleton(DOMAIN_EVENTS_LISTENER, DomainEventsListener);
 DI.registerSingleton(InMemoryUserProjector, InMemoryUserProjector);
 DI.registerSingleton(IN_MEMORY_USERS_STORE, InMemoryStore);
+
+// Register listeners
+DI.registerIdentifiedProvider(DOMAIN_EVENTS_LISTENER, DomainEventsListener);
 
 // UseCases
 DI.registerIdentifiedProvider(EmailSignUp.USECASE_NAME, EmailSignUp.RequestEmailSignUp);
@@ -67,9 +68,13 @@ DI.registerIdentifiedProvider(EmailSignUp.USECASE_NAME, EmailSignUp.RequestEmail
 // Projectors
 DI.registerIdentifiedProvider(DOMESTIC_USER_PROJECTOR, InMemoryUserProjector);
 
+// Notifications
+DI.registerSingleton(NOTIFICATION_PRODUCER, KafkaNotificationProducer);
+DI.registerFactory(KAFKA_NOTIFICATION_PRODUCER_FACTORY, kafkaNotificationProducerFactory);
+
 // Repositories
-DI.registerIdentifiedProvider(SESSION_REPOSITORY, InMemorySessionRepository);
-DI.registerIdentifiedProvider(USER_REPOSITORY, InMemoryUserRepository);
+DI.registerSingleton(SESSION_REPOSITORY, InMemorySessionRepository);
+DI.registerSingleton(USER_REPOSITORY, InMemoryUserRepository);
 
 // Factories
 DI.registerFactory(RPC_SERVER_FACTORY, rpcServerFactory);
@@ -79,4 +84,5 @@ DI.registerSingleton(GLOBAL_CONFIG, GlobalConfig);
 DI.registerSingleton(AUTHENTICATION_CONFIG, AuthenticationConfig);
 DI.registerSingleton(LOGGER_TYPE, BaseLogger);
 
+// Start execution
 DI.bootstrap(AuthenticationServer);

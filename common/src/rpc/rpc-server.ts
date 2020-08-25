@@ -1,11 +1,10 @@
 import { inject, injectable, interfaces } from 'inversify';
 import * as grpc from '@grpc/grpc-js';
+import asyncRetry from 'async-retry';
 import { ILogger, LOGGER_TYPE } from '../utils';
 import { ApiService, loadApiService } from '../api-contracts';
-import { Context } from 'express-validator/src/context';
 import { RPC_HANDLERS } from './rpc-handler';
-import asyncRetry from 'async-retry';
-import { EventSourcingErrorNames } from '../event-sourcing/exceptions/exceptions-names';
+import { EventSourcingErrorNames } from '../event-sourcing';
 import { RpcStatus } from './rpc-status';
 
 @injectable()

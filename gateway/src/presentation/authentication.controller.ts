@@ -16,18 +16,11 @@ import {
 } from '@infragis/common';
 import express from 'express';
 import { inject } from 'inversify';
-import {
-  controller,
-  httpGet,
-  httpPost,
-  interfaces,
-} from 'inversify-express-utils';
+import { controller, httpGet, httpPost, interfaces } from 'inversify-express-utils';
 
 @controller(`/api/${ApiEndpoints.Authentication}`)
 export class AuthenticationController implements interfaces.Controller {
-  private _authenticationRpc: RpcClient<
-    AuthenticationCommands.Service
-  > = this._rpcClientFactory({
+  private _authenticationRpc: RpcClient<AuthenticationCommands.Service> = this._rpcClientFactory({
     host: this._gatewayConfig.get('authentication.rpc.host'),
     service: AuthenticationCommandsService,
     port: this._gatewayConfig.getNumber('authentication.rpc.port'),
@@ -44,9 +37,7 @@ export class AuthenticationController implements interfaces.Controller {
   @httpPost('/signup/email')
   requestSignUp(req: express.Request) {
     const { email, password } = req.body;
-    this._logger.info(
-      `Gateway: request sign up for ${email} with password ${password}`
-    );
+    this._logger.info(`Gateway: request sign up for ${email} with password ${password}`);
     this._authenticationRpc.client.requestEmailSignUp({ email, password });
   }
 }

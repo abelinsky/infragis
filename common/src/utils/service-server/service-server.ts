@@ -1,8 +1,8 @@
-import { interfaces } from 'inversify';
+import { inject, postConstruct, interfaces } from 'inversify';
 import * as http from 'http';
-import { inject, postConstruct } from 'inversify';
 import { ILogger, LOGGER_TYPE } from '../logger';
 import { Daemon, getDaemonsCtrsFromMetadata } from './application-daemon';
+import { DI } from '../../dependency-injection';
 
 const DAEMON_TYPE = Symbol('DAEMON');
 
@@ -11,12 +11,15 @@ export abstract class ServiceServer {
   abstract healthcheck(): Promise<boolean>;
 
   private errorTypes = ['unhandledRejection', 'uncaughtException'];
-  private signals = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
+  private signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
 
   @inject(LOGGER_TYPE) private _logger!: ILogger;
   private applicationDaemons: Daemon[] = [];
 
-  constructor(private container: interfaces.Container, private readonly port = 3000) {
+  constructor(
+    private container: interfaces.Container = DI.getContainer(),
+    private readonly port = 3000
+  ) {
     http
       .createServer(async (req, res) => {
         const isAlive = await this.healthcheck();
@@ -32,10 +35,11 @@ export abstract class ServiceServer {
       });
     });
 
-    this.signals.forEach((signal) => {
+    this.signalTraps.forEach((signal) => {
       process.on(signal, async () => {
         this._logger.warn('Exiting: ', signal);
         await this.shutdown();
+        process.kill(process.pid, signal);
       });
     });
   }
@@ -44,6 +48,11 @@ export abstract class ServiceServer {
   async initialize() {
     this.registerDaemons();
     await this.startDaemons();
+    this._logger.info(
+      `Server has been initialized ${
+        this.healthcheck() ? 'and is running' : 'but something went wrong'
+      }...`
+    );
   }
 
   private registerDaemons(): void {
@@ -65,13 +74,17 @@ export abstract class ServiceServer {
     }
 
     for (const daemon of this.applicationDaemons) {
+      this._logger.info(`   starting daemon ${daemon.name}...`);
       await daemon.start();
     }
+
+    this._logger.info('daemons have been started...');
   }
 
   private async stopDaemons() {
     for (const daemon of this.applicationDaemons) {
       await daemon.stop();
+      this._logger.info(`daemon ${daemon.name} stopped...`);
     }
   }
 

@@ -39,6 +39,7 @@ export class RequestEmailSignUp implements IUseCase<AuthenticationCommands.Servi
 
     let userId = await this.userRepository.getId(email);
 
+    // TODO: Move this to AuthenticationDomainService.authenticate()
     if (!userId) {
       userId = UserId.generate();
       const hashedPassword = await Password.fromString(password).hash();

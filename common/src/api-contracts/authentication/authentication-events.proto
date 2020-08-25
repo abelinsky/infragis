@@ -2,16 +2,21 @@ syntax = "proto3";
 
 package authentication;
 
+/* Events from Session Aggregate */
 message AuthenticationEvents { repeated AuthenticationEvent events = 1; }
 
 message AuthenticationEvent {
-  string id = 1;
-  string name = 2;
-  AuthenticationPayload payload = 3;
+  string eventId = 1;
+  string aggregateId = 2;
+  int32 version = 3;
+  string name = 4;
+  string insertedAt = 5;
+  int32 sequence = 6;
+  AuthenticationEventData data = 7;
 }
 
-message AuthenticationPayload {
-  oneof payload {
+message AuthenticationEventData {
+  oneof data {
     SignUpRequested signUpRequested = 1;
     SignOut signOut = 2;
   }
@@ -22,4 +27,26 @@ message SignUpRequested {
   string email = 2;
 }
 
-message SignOut { string signeOutAt = 1; }
+message SignOut { string signedOutAt = 1; }
+
+/* Events from User Aggregate */
+message UserEvents { repeated UserEvent events = 1; }
+
+message UserEvent {
+  string eventId = 1;
+  string aggregateId = 2;
+  int32 version = 3;
+  string name = 4;
+  string insertedAt = 5;
+  int32 sequence = 6;
+  UserEventData data = 7;
+}
+
+message UserEventData {
+  oneof data { UserCreated userCreated = 1; }
+}
+
+message UserCreated {
+  string userId = 1;
+  string email = 2;
+}

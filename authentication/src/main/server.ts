@@ -1,6 +1,5 @@
 import { AUTHENTICATION_CONFIG } from '@/main/config';
 import {
-  DI,
   GetEvents,
   RPC_SERVER_FACTORY,
   RpcHandler,
@@ -13,7 +12,6 @@ import { GLOBAL_CONFIG, IConfig, ILogger, LOGGER_TYPE } from '@infragis/common';
 import { AuthenticationCommands, AuthenticationCommandsService } from '@infragis/common';
 import { IUseCase } from '@infragis/common';
 import { inject, injectable } from 'inversify';
-
 import { EmailSignUp } from '../application';
 
 @injectable()
@@ -32,7 +30,7 @@ export class AuthenticationServer extends ServiceServer implements Authenticatio
     @inject(LOGGER_TYPE) private logger: ILogger,
     @inject(RPC_SERVER_FACTORY) private rpcServerFactory: RpcServerFactory
   ) {
-    super(DI.getContainer());
+    super();
   }
 
   @RpcHandler(AuthenticationCommandsService)
@@ -54,4 +52,10 @@ export class AuthenticationServer extends ServiceServer implements Authenticatio
   async healthcheck(): Promise<boolean> {
     return this.rpcServer.started;
   }
+
+  // executeUseCase<T extends keyof AuthenticationCommands.Service>(useCaseName: T) {}
+
+  // test(): void {
+  //   this.executeUseCase('requestEmailSignUp');
+  // }
 }

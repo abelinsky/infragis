@@ -1,9 +1,11 @@
-import { inject } from 'inversify';
-import { Daemon, IProjector, LOGGER_TYPE, ILogger, ApplicationDaemon } from '@infragis/common';
 import { DOMESTIC_USER_PROJECTOR } from '@/infrastructure';
+import { ApplicationDaemon, Daemon, ILogger, IProjector, LOGGER_TYPE } from '@infragis/common';
+import { inject } from 'inversify';
 
 @ApplicationDaemon()
 export class UserProjectionDaemon extends Daemon {
+  name: string = 'usr-projection-d';
+
   constructor(
     @inject(DOMESTIC_USER_PROJECTOR) private userProjector: IProjector,
     @inject(LOGGER_TYPE) private logger: ILogger
@@ -12,11 +14,12 @@ export class UserProjectionDaemon extends Daemon {
   }
 
   async start(): Promise<boolean> {
-    this.logger.info('============== UserProjectionDaemon started! ===================');
+    this.userProjector.start();
+    this.logger.debug('Starting projecting user events into query model...');
     return true;
   }
 
   async stop(): Promise<void> {
-    // nothing to do here
+    this.userProjector.stop();
   }
 }

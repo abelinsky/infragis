@@ -1,8 +1,19 @@
-import { StoredEvent } from '../core/stored-event';
-import { inject } from 'inversify';
-import { LOGGER_TYPE, ILogger } from '../../utils';
+import {inject} from 'inversify';
+
+import {ILogger, LOGGER_TYPE} from '../../utils';
+import {StoredEvent} from '../core/stored-event';
 
 export interface IProjector {
+  /**
+   * Starts listening and processing events.
+   */
+  start(): Promise<void>;
+
+  /**
+   * Stops listening and processing events.
+   */
+  stop(): Promise<void>;
+
   /**
    * Gets current position in the Events Stream
    * that indicates the number of the events that
@@ -40,11 +51,13 @@ export interface IProjector {
 export abstract class Projector implements IProjector {
   @inject(LOGGER_TYPE) logger!: ILogger;
 
+  abstract async start(): Promise<void>;
+  abstract async stop(): Promise<void>;
   abstract async getPosition(): Promise<number>;
   abstract async increasePosition(): Promise<void>;
   abstract async getEvents(from: number): Promise<StoredEvent[]>;
 
-  apply = async (event: StoredEvent): Promise<boolean> => {
+  apply = async(event: StoredEvent): Promise<boolean> => {
     const currentPosition = await this.getPosition();
     if (event.sequence !== currentPosition + 1) {
       this.logger.warn(`Can't apply event ${event.eventId} with 
@@ -82,7 +95,8 @@ export abstract class Projector implements IProjector {
       this.logger.debug(`Trying to handle event ${event.name}...`);
       await (this as any)[handlerName](event);
     } catch (err) {
-      this.logger.error(`Error occured in Projector while processing event id=${event.eventId}`);
+      this.logger.error(`Error occured in Projector while processing event id=${
+        event.eventId}`);
       this.logger.error(err);
       throw err;
     }
@@ -95,15 +109,11 @@ export abstract class Projector implements IProjector {
  */
 export const ProjectionHandler = (eventName: string): MethodDecorator => {
   return function ProjectionDecorator(
-    target: any,
-    methodName: string | symbol,
-    _descriptor: PropertyDescriptor
-  ) {
+    target: any, methodName: string|symbol, _descriptor: PropertyDescriptor) {
     if (!(target instanceof Projector)) {
       throw new Error(
         '@ProjectionDecorator can be used only inside Projector class descendants.' +
-          `But ${target} does not extend Projector class.`
-      );
+          `But ${target} does not extend Projector class.`);
     }
     // This metadata is used in `handleEvent` method of
     // the Projector class.

@@ -3,3 +3,7 @@ export * from './api.service';
 export * from './load-api-service';
 export * from './authentication';
 export * from './common';
+export * from './notification-message-decorator';
+export * from './message-packing';
+export * from './notification-message';
+export * from './notification-topics';

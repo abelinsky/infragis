@@ -6,6 +6,7 @@
 import { decorate, injectable } from 'inversify';
 
 export abstract class Daemon {
+  abstract readonly name: string;
   abstract start(): Promise<boolean>;
   abstract stop(): Promise<void>;
 }

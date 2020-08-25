@@ -1,2 +1,2 @@
-export * as EmailSignUp from './command-handlers/email-signup';
+export * from './use-cases';
 export * from './daemons';

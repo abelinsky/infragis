@@ -1,6 +1,28 @@
 version: "3"
 
 services:
+  zookeeper:
+    container_name: zookeeper
+    image: zookeeper
+    ports:
+      - 2181:2181
+    environment:
+      - ZOO_LOG4J_PROP=WARN
+
+  kafka:
+    container_name: kafka
+    image: confluentinc/cp-kafka
+    ports:
+      - 9092:9092
+    environment:
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+    logging:
+      driver: none
+    depends_on:
+      - zookeeper
+
   gateway:
     container_name: gateway
     image: node:lts-alpine
@@ -28,3 +50,5 @@ services:
       - ./authentication/node_modules:/usr/src/app/node_modules
     env_file: env/.docker-compose.env
     command: node_modules/.bin/ts-node-dev src/main --colors --transpileOnly --debounce 1500
+    depends_on:
+      - kafka

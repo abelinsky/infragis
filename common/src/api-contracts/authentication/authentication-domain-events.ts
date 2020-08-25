@@ -1,5 +1,3 @@
-import { EventTopics } from '../api-event-topics';
-
 /**
  * Event names in format 'service.aggregate.eventName'.
  */
@@ -8,7 +6,7 @@ export enum EventNames {
   UserCreated = 'authentication.user.created',
 }
 
-// Events Data
+// Event Data
 export interface UserCreatedData {
   id: string;
   email: string;

@@ -8,29 +8,15 @@ if (process.env['global.environment'] === 'dev') {
   });
 } else require('module-alias/register');
 
-import {
-  DI,
-  GlobalConfig,
-  GLOBAL_CONFIG,
-  BaseLogger,
-  LOGGER_TYPE,
-} from '@infragis/common/';
+import { DI, GlobalConfig, GLOBAL_CONFIG, BaseLogger, LOGGER_TYPE } from '@infragis/common/';
 
 // rpc
-import {
-  RpcClientFactory,
-  RPC_CLIENT_FACTORY,
-  rpcClientFactory,
-  RpcClient,
-} from '@infragis/common/';
+import { RPC_CLIENT_FACTORY, rpcClientFactory, RpcClient } from '@infragis/common/';
 
 import { GatewayServer } from '@/main/server';
 import { AuthenticationController } from '@/presentation';
 import { GatewayConfig, GATEWAY_CONFIG } from './config';
-import {
-  EXPRESS_SERVER_FACTORY,
-  expressServerFactory,
-} from '@/main/factories';
+import { EXPRESS_SERVER_FACTORY, expressServerFactory } from '@/main/factories';
 
 DI.registerProviders(GatewayServer, AuthenticationController, RpcClient);
 

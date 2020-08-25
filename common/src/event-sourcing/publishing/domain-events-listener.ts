@@ -8,19 +8,19 @@ import { DOMAIN_EVENTS_PUBLISHER, IDomainEventsPublisher } from './domain-events
 import { EventName } from '../../types';
 
 export interface IDomainEventsListener {
-  eventsSource: Observable<StoredEvent>;
-  listen(aggregateType?: Class<Aggregate> | RegExp): Observable<StoredEvent>;
+  //eventsSource: Observable<StoredEvent>;
+  getListener(aggregateType?: Class<Aggregate> | RegExp): Observable<StoredEvent>;
 }
 
 @injectable()
 export class DomainEventsListener implements IDomainEventsListener {
   constructor(@inject(DOMAIN_EVENTS_PUBLISHER) private eventPublisher: IDomainEventsPublisher) {}
 
-  get eventsSource(): Observable<StoredEvent> {
+  protected get eventsSource(): Observable<StoredEvent> {
     return this.eventPublisher;
   }
 
-  listen(aggregateType?: Class<Aggregate> | RegExp): Observable<StoredEvent> {
+  getListener(aggregateType?: Class<Aggregate> | RegExp): Observable<StoredEvent> {
     let regExp: RegExp | undefined;
     if (aggregateType && !(aggregateType instanceof RegExp)) {
       regExp = new RegExp(aggregateType.name, 'i');

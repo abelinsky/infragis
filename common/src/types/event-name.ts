@@ -10,13 +10,13 @@ export class EventName {
 
   /**
    * Factory for @param EventName instantiation.
-   * @param eventName Name of the event in the format: serviceName.aggregateName:method or aggregateName:method
+   * @param eventName Name of the event in the format: serviceName.aggregateName.eventName
    * @example
-   *    authentication.session:signInRequested
-   *    user:userCreated
+   *    authentication.session.signInRequested
+   *    users.user.userCreated
    */
   static fromString(eventName: string): EventName {
-    const regexEventName = new RegExp(/^[A-Z]+.[A-Z]+.[A-Z]+/i);
+    const regexEventName = new RegExp(/^[A-Z]+\.[A-Z]+\.[A-Z]+$/i);
     if (!regexEventName.exec(eventName)) throw new InvalidEventName(eventName);
     const [service, aggregate, event] = eventName.split('.');
     return new EventName(service, aggregate, event);
@@ -26,6 +26,9 @@ export class EventName {
     return `${this.service}.${this.aggregate}:${this.eventName}`;
   }
 
+  /**
+   * Gets topic name in format `serviceName.events.aggregateName.`
+   */
   getTopic(): string {
     return `${this.service}.events.${this.aggregate}`;
   }

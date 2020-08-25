@@ -18,7 +18,7 @@ export abstract class DomainEventsHandler {
   @postConstruct()
   initialize() {
     this.subscription = this.eventsListener
-      .listen(this.aggregateClass)
+      .getListener(this.aggregateClass)
       .subscribe((e) => this.handleEvent(e));
   }
 
