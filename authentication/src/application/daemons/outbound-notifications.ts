@@ -1,17 +1,12 @@
 import { Unsubscribable } from 'rxjs';
-import { logLevel } from 'kafkajs';
 import {
   ApplicationDaemon,
   Daemon,
-  ILogger,
-  LOGGER_TYPE,
-  KafkaNotificationProducerFactory,
-  GLOBAL_CONFIG,
-  IConfig,
   DOMAIN_EVENTS_LISTENER,
   IDomainEventsListener,
   EventName,
-  KAFKA_NOTIFICATION_PRODUCER_FACTORY,
+  NOTIFICATION_PRODUCER,
+  INotificationProducer,
 } from '@infragis/common';
 import { inject } from 'inversify';
 
@@ -21,16 +16,8 @@ export class OutboundNotifications extends Daemon {
 
   private subscription: Unsubscribable | undefined = undefined;
 
-  private kafkaProducer = this.producerFactory({
-    brokers: this.globalConfig.getArray('global.kafka.brokers'),
-    logLevel: logLevel.WARN,
-  });
-
   constructor(
-    @inject(KAFKA_NOTIFICATION_PRODUCER_FACTORY)
-    private producerFactory: KafkaNotificationProducerFactory,
-    @inject(GLOBAL_CONFIG) private globalConfig: IConfig,
-    @inject(LOGGER_TYPE) private logger: ILogger,
+    @inject(NOTIFICATION_PRODUCER) private kafkaProducer: INotificationProducer,
     @inject(DOMAIN_EVENTS_LISTENER) private domainEventsListener: IDomainEventsListener
   ) {
     super();

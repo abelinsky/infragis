@@ -23,7 +23,7 @@ export class EventName {
   }
 
   toString(): string {
-    return `${this.service}.${this.aggregate}:${this.eventName}`;
+    return `${this.service}.${this.aggregate}.${this.eventName}`;
   }
 
   /**

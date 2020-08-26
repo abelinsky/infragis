@@ -14,12 +14,12 @@ services:
     image: confluentinc/cp-kafka
     ports:
       - 9092:9092
+    logging:
+      driver: none
     environment:
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
       - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-    logging:
-      driver: none
     depends_on:
       - zookeeper
 
@@ -52,3 +52,18 @@ services:
     command: node_modules/.bin/ts-node-dev src/main --colors --transpileOnly --debounce 1500
     depends_on:
       - kafka
+
+  user:
+    container_name: user
+    image: node:lts-alpine
+    working_dir: /usr/src/app
+    volumes:
+      - ./user/package.json:/usr/src/app/package.json
+      - ./user/tsconfig.json:/usr/src/app/tsconfig.json
+      - ./user/src:/usr/src/app/src
+      - ./user/node_modules:/usr/src/app/node_modules
+    env_file: env/.docker-compose.env
+    command: node_modules/.bin/ts-node-dev src/main --colors --transpileOnly --debounce 1500
+    depends_on:
+      - kafka
+      - authentication

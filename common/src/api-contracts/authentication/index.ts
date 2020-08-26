@@ -24,4 +24,4 @@ export class UserNotificationMessage extends NotificationMessage {
 }
 
 export * as AuthenticationCommands from './authentication-commands.contract';
-export * as AuthenticationEvents from './authentication-domain-events';
+export * as AuthenticationEvents from './authentication-events';

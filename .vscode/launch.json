@@ -6,12 +6,12 @@
 
   "configurations": [
     {
+      "name": "Debug Authentication Service",
       "type": "node",
       "request": "launch",
-      "name": "Debug Authentication Service",
+      "preLaunchTask": "npm: build - authentication",
       "cwd": "${workspaceFolder}/authentication",
-      "preLaunchTask": "prebuildAuthentication",
-      "program": "${cwd}/authentication/src/main/index.ts",
+      "program": "${workspaceFolder}/authentication/src/main/index.ts",
       "protocol": "inspector",
       "outFiles": ["${workspaceFolder}/authentication/dist/**/*.js"],
       "sourceMaps": true,
@@ -19,9 +19,28 @@
       "internalConsoleOptions": "openOnSessionStart",
       "env": {
         "global.environment": "dev",
-        "global.kafka.brokers": "kafka:9092"
+        "global.kafka.brokers": "localhost:9092"
       }
     },
+
+    {
+      "name": "Debug User Service",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/user",
+      "preLaunchTask": "npm: build - user",
+      "program": "${workspaceFolder}/user/src/main/index.ts",
+      "protocol": "inspector",
+      "outFiles": ["${workspaceFolder}/user/dist/**/*.js"],
+      "sourceMaps": true,
+      "smartStep": true,
+      "internalConsoleOptions": "openOnSessionStart",
+      "env": {
+        "global.environment": "dev",
+        "global.kafka.brokers": "localhost:9092"
+      }
+    },
+
     {
       "type": "node",
       "request": "attach",

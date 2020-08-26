@@ -50,7 +50,7 @@ export abstract class ServiceServer {
     await this.startDaemons();
     this._logger.info(
       `Server has been initialized ${
-        this.healthcheck() ? 'and is running' : 'but something went wrong'
+        this.healthcheck() ? 'and is running' : 'but healthcheck failed'
       }...`
     );
   }
@@ -78,7 +78,7 @@ export abstract class ServiceServer {
       await daemon.start();
     }
 
-    this._logger.info('daemons have been started...');
+    this._logger.info(`${this.applicationDaemons.length} daemons have been started...`);
   }
 
   private async stopDaemons() {

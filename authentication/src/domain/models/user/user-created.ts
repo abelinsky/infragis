@@ -21,21 +21,16 @@ export class UserCreated implements IDomainEvent {
     return {
       id: this.userId.toString(),
       email: this.email.toString(),
-      encryptedPassword: this.password.toString(),
+      password: this.password.toString(),
       createdAt: this.createdAt.toString(),
     };
   }
 
-  static deserialize({
-    id,
-    email,
-    encryptedPassword,
-    createdAt,
-  }: AuthenticationEvents.UserCreatedData) {
+  static deserialize({ id, email, password, createdAt }: AuthenticationEvents.UserCreatedData) {
     return new UserCreated(
       UserId.fromString(id),
       Email.fromString(email),
-      Password.fromString(encryptedPassword),
+      Password.fromString(password),
       Timestamp.fromString(createdAt)
     );
   }

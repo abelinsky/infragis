@@ -4,16 +4,22 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "prebuildAuthentication",
       "type": "npm",
       "script": "build",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "options": {
-        "cwd": "${workspaceFolder}/authentication"
-      }
+      "path": "authentication/",
+      "group": "build",
+      "problemMatcher": [],
+      "label": "npm: build - authentication",
+      "detail": "npm run clean && node_modules/typescript/bin/tsc -p tsconfig-build.json && npm run lint"
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "path": "user/",
+      "group": "build",
+      "problemMatcher": [],
+      "label": "npm: build - user",
+      "detail": "npm run clean && node_modules/typescript/bin/tsc -p tsconfig-build.json && npm run lint"
     }
   ]
 }

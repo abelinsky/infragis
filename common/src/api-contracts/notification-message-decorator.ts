@@ -1,7 +1,7 @@
 export const messageMap = new Map();
 
 /**
- * Name of the event in the format: serviceName.events.aggregateName or aggregateName:method
+ * Name of the event in the format: serviceName.events.aggregateName.
  */
 export const Notification = (topic: string) => {
   return function NotificationDecorator(target: any) {

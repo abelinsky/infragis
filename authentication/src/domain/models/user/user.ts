@@ -49,9 +49,9 @@ export class User extends Aggregate<SerializedUser> {
     return user;
   }
 
-  static create(id: UserId, email: Email, encryptedPassword: Password, createdAt: Timestamp): User {
+  static create(id: UserId, email: Email, password: Password, createdAt: Timestamp): User {
     const user = new User();
-    user.apply(new UserCreated(id, email, encryptedPassword, createdAt));
+    user.apply(new UserCreated(id, email, password, createdAt));
     return user;
   }
 

@@ -17,10 +17,7 @@ import {
   GLOBAL_CONFIG,
   LOGGER_TYPE,
   NOTIFICATION_PRODUCER,
-  KAFKA_NOTIFICATION_PRODUCER_FACTORY,
   KafkaNotificationProducer,
-  kafkaNotificationProducerFactory,
-  KafkaNotificationConsumer,
 } from '@infragis/common/';
 
 // rpc
@@ -53,11 +50,28 @@ import { SESSION_REPOSITORY, USER_REPOSITORY } from '@/domain';
 
 DI.registerProviders(AuthenticationServer, RpcServer, InMemoryEventStore, InMemorySnaphotStore);
 
-// Event Sourcing
 // TODO: Explore if possible to inject Singletons ClassName rather than a label.
+
+/**
+ * Singletons.
+ */
 DI.registerSingleton(DOMAIN_EVENTS_PUBLISHER, DomainEventsPublisher);
-DI.registerSingleton(InMemoryUserProjector, InMemoryUserProjector);
 DI.registerSingleton(IN_MEMORY_USERS_STORE, InMemoryStore);
+DI.registerSingleton(NOTIFICATION_PRODUCER, KafkaNotificationProducer);
+DI.registerSingleton(InMemoryUserProjector, InMemoryUserProjector);
+
+// Config, utils
+DI.registerSingleton(GLOBAL_CONFIG, GlobalConfig);
+DI.registerSingleton(AUTHENTICATION_CONFIG, AuthenticationConfig);
+DI.registerSingleton(LOGGER_TYPE, BaseLogger);
+
+// Repositories
+DI.registerSingleton(SESSION_REPOSITORY, InMemorySessionRepository);
+DI.registerSingleton(USER_REPOSITORY, InMemoryUserRepository);
+
+/**
+ * Other providers.
+ */
 
 // Register listeners
 DI.registerIdentifiedProvider(DOMAIN_EVENTS_LISTENER, DomainEventsListener);
@@ -68,21 +82,8 @@ DI.registerIdentifiedProvider(EmailSignUp.USECASE_NAME, EmailSignUp.RequestEmail
 // Projectors
 DI.registerIdentifiedProvider(DOMESTIC_USER_PROJECTOR, InMemoryUserProjector);
 
-// Notifications
-DI.registerSingleton(NOTIFICATION_PRODUCER, KafkaNotificationProducer);
-DI.registerFactory(KAFKA_NOTIFICATION_PRODUCER_FACTORY, kafkaNotificationProducerFactory);
-
-// Repositories
-DI.registerSingleton(SESSION_REPOSITORY, InMemorySessionRepository);
-DI.registerSingleton(USER_REPOSITORY, InMemoryUserRepository);
-
 // Factories
 DI.registerFactory(RPC_SERVER_FACTORY, rpcServerFactory);
-
-// Configs, utils
-DI.registerSingleton(GLOBAL_CONFIG, GlobalConfig);
-DI.registerSingleton(AUTHENTICATION_CONFIG, AuthenticationConfig);
-DI.registerSingleton(LOGGER_TYPE, BaseLogger);
 
 // Start execution
 DI.bootstrap(AuthenticationServer);

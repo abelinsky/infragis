@@ -1,10 +1,15 @@
 import { Observable } from 'rxjs';
-import { Aggregate, StoredEvent } from '../core';
+import { StoredEvent } from '../core';
 
 /**
  * Iterface for consumer of messages from event-bus.
  */
 export interface INotificationConsumer {
+  /**
+   * Id of the consumer, useful for debugging purposes.
+   */
+  id: string;
+
   /**
    * Returns the status of the connection to event-bus.
    */

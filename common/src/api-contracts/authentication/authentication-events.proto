@@ -24,7 +24,8 @@ message AuthenticationEventData {
 
 message SignUpRequested {
   string sessionId = 1;
-  string email = 2;
+  string userId = 2;
+  string email = 3;
 }
 
 message SignOut { string signedOutAt = 1; }
@@ -47,6 +48,7 @@ message UserEventData {
 }
 
 message UserCreated {
-  string userId = 1;
+  string id = 1;
   string email = 2;
+  string createdAt = 3;
 }

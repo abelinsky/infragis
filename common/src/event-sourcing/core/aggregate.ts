@@ -7,27 +7,63 @@ import { StoredSnapshot } from './stored-snapshot';
 import { StoredEvent } from './stored-event';
 import { ReplayVersionMismatchException } from '../exceptions';
 
+/**
+ * Base class for the Aggregates.
+ */
 export abstract class Aggregate<TSerialized = Record<any, any>> {
+  /**
+   * Unique identity of the aggregate.
+   */
   protected abstract id: Id;
+
+  /**
+   * Serializes aggregate data. Serialization is used in {@link Aggregate#snapshot}
+   * method and goes into snapshot repository.
+   */
   protected abstract serialize(): TSerialized;
+
+  /**
+   * Deserializes from snapshot data. Deserialization is used
+   * in {@link Aggregate#applySnapshot}
+   * to reconstitute aggregate's state from it's snapshot.
+   * @param data Snapshot data.
+   */
   protected abstract deserialize(data: TSerialized): void;
 
   private eventsStream: EventsStream | undefined;
+
+  /**
+   * Current version of the aggregate after mutating states
+   * in {@link Aggregate#mutate} method.
+   */
   private version = StreamVersion.start();
+
+  /**
+   * Version of persisted snapshot.
+   */
   private persistedVersion = StreamVersion.start();
 
   get persistedAggregateVersion(): number {
     return this.persistedVersion.toNumber();
   }
 
+  /**
+   * Returns Current version of the aggregate after n-mutations of it's state.
+   */
   get aggregateVersion(): number {
     return this.version.toNumber();
   }
 
+  /**
+   * Returns Unique Aggregate Identity for this instance.
+   */
   get aggregateId(): Id {
     return this.id;
   }
 
+  /**
+   * Produces and returns a snapshot of current aggregate's state.
+   */
   get snapshot(): StoredSnapshot<TSerialized> {
     return {
       aggregateId: this.aggregateId.toString(),
@@ -70,6 +106,10 @@ export abstract class Aggregate<TSerialized = Record<any, any>> {
     this.version.next();
   }
 
+  /**
+   * Replays events and applies them to mutate the state of the aggregate.
+   * @param events Domain Events that occurred and are stored in the Event store.
+   */
   protected replayEvents(events: StoredEvent[]): void {
     events.forEach((event) => {
       const deserializeHandler = eventDeserializer.get(event.name);
@@ -87,6 +127,11 @@ export abstract class Aggregate<TSerialized = Record<any, any>> {
     });
   }
 
+  /**
+   * Applies a snapshot and an array of events to current aggregate and produces it's new state.
+   * @param snapshot Snapshot of the agregate's state.
+   * @param eventsAfter An array of events that occurred after the snapshot has been persisted.
+   */
   protected applySnapshot(snapshot: StoredSnapshot<TSerialized>, eventsAfter: StoredEvent[]): void {
     this.deserialize(snapshot.data);
     this.version = StreamVersion.from(snapshot.version);
@@ -96,7 +141,7 @@ export abstract class Aggregate<TSerialized = Record<any, any>> {
 
   /**
    * Dumps events stream.
-   * @returns Stream of events deleted from `this` instance.
+   * @returns Stream of events removed from `this` instance.
    */
   resetEvents(): EventsStream {
     const stream = this.eventsStream || EventsStream.create(this.id);

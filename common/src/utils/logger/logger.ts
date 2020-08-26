@@ -1,4 +1,5 @@
 import { injectable } from 'inversify';
+import chalk from 'chalk';
 
 export interface ILogger {
   error: (err: Error | string) => void;
@@ -11,23 +12,24 @@ export const LOGGER_TYPE = Symbol.for('ILogger');
 
 @injectable()
 export class BaseLogger implements ILogger {
-  constructor() {
-    this.info('LOGGER CREATED');
-  }
+  private chalk = new chalk.Instance({ level: 1 });
 
   debug(...text: string[]): void {
-    console.debug(text);
+    const msg = text.join('\r\n');
+    console.log(this.chalk.cyanBright(`${msg}`));
   }
 
   error(err: string | Error): void {
-    console.error(err);
+    console.error(this.chalk.red.bold(`Error: ${err.toString()}`));
   }
 
   info(...text: string[]): void {
-    console.log(text);
+    const msg = text.join('\r\n');
+    console.log(`${msg}`);
   }
 
   warn(...text: string[]): void {
-    console.warn(text);
+    const msg = text.join('\r\n');
+    console.log(this.chalk.magenta(`Warning: ${msg}`));
   }
 }
