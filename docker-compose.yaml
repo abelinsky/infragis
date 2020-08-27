@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 services:
   zookeeper:
@@ -22,6 +22,32 @@ services:
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
     depends_on:
       - zookeeper
+
+  admin:
+    container_name: admin
+    image: node:lts-alpine
+    working_dir: /usr/src/app
+    volumes:
+      - ./admin/package.json:/usr/src/app/package.json
+      - ./admin/tsconfig.json:/usr/src/app/tsconfig.json
+      - ./admin/src:/usr/src/app/src
+      - ./admin/node_modules:/usr/src/app/node_modules
+      - ./scripts:/usr/src/app/scripts
+    env_file: env/.docker-compose.env
+    command:
+      [
+        './scripts/wait-for-kafka.sh',
+        'kafka',
+        '9092',
+        'node_modules/.bin/ts-node-dev',
+        'src/main',
+        '--colors',
+        '--transpileOnly',
+        '--debounce',
+        '1500',
+      ]
+    depends_on:
+      - kafka
 
   gateway:
     container_name: gateway
@@ -48,8 +74,20 @@ services:
       - ./authentication/tsconfig.json:/usr/src/app/tsconfig.json
       - ./authentication/src:/usr/src/app/src
       - ./authentication/node_modules:/usr/src/app/node_modules
+      - ./scripts:/usr/src/app/scripts
     env_file: env/.docker-compose.env
-    command: node_modules/.bin/ts-node-dev src/main --colors --transpileOnly --debounce 1500
+    command:
+      [
+        './scripts/wait-for-kafka.sh',
+        'kafka',
+        '9092',
+        'node_modules/.bin/ts-node-dev',
+        'src/main',
+        '--colors',
+        '--transpileOnly',
+        '--debounce',
+        '1500',
+      ]
     depends_on:
       - kafka
 
@@ -62,8 +100,21 @@ services:
       - ./user/tsconfig.json:/usr/src/app/tsconfig.json
       - ./user/src:/usr/src/app/src
       - ./user/node_modules:/usr/src/app/node_modules
+      - ./scripts:/usr/src/app/scripts
     env_file: env/.docker-compose.env
-    command: node_modules/.bin/ts-node-dev src/main --colors --transpileOnly --debounce 1500
+    command:
+      [
+        './scripts/wait-for-kafka.sh',
+        'kafka',
+        '9092',
+        'node_modules/.bin/ts-node-dev',
+        'src/main',
+        '--colors',
+        '--transpileOnly',
+        '--debounce',
+        '1500',
+      ]
     depends_on:
       - kafka
+      - admin
       - authentication
