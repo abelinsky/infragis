@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   zookeeper:
@@ -36,15 +36,15 @@ services:
     env_file: env/.docker-compose.env
     command:
       [
-        './scripts/wait-for-kafka.sh',
-        'kafka',
-        '9092',
-        'node_modules/.bin/ts-node-dev',
-        'src/main',
-        '--colors',
-        '--transpileOnly',
-        '--debounce',
-        '1500',
+        "./scripts/wait-for-kafka.sh",
+        "kafka",
+        "9092",
+        "node_modules/.bin/ts-node-dev",
+        "src/main",
+        "--colors",
+        "--transpileOnly",
+        "--debounce",
+        "1500",
       ]
     depends_on:
       - kafka
@@ -78,18 +78,33 @@ services:
     env_file: env/.docker-compose.env
     command:
       [
-        './scripts/wait-for-kafka.sh',
-        'kafka',
-        '9092',
-        'node_modules/.bin/ts-node-dev',
-        'src/main',
-        '--colors',
-        '--transpileOnly',
-        '--debounce',
-        '1500',
+        "./scripts/wait-for-kafka.sh",
+        "kafka",
+        "9092",
+        "node_modules/.bin/ts-node-dev",
+        "src/main",
+        "--colors",
+        "--transpileOnly",
+        "--debounce",
+        "1500",
       ]
     depends_on:
       - kafka
+  authentication-database:
+    container_name: authentication-database
+    image: postgres
+    restart: always
+    ports:
+      - "54320:5432"
+    volumes:
+      - ./authentication/database/install-extensions.sql:/docker-entrypoint-initdb.d/1-install-extensions.sql
+      - ./authentication/database/setup.sql:/docker-entrypoint-initdb.d/2-setup.sql
+      - ./authentication/database/events-data.sql:/docker-entrypoint-initdb.d/3-events-data.sql
+      #- ./server_db/authentication:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${AUTHENTICATION_DATABASE_USER}
+      - POSTGRES_PASSWORD=${AUTHENTICATION_DATABASE_PASSWORD}
+      - POSTGRES_DB=${AUTHENTICATION_DATABASE_NAME}
 
   user:
     container_name: user
@@ -104,17 +119,26 @@ services:
     env_file: env/.docker-compose.env
     command:
       [
-        './scripts/wait-for-kafka.sh',
-        'kafka',
-        '9092',
-        'node_modules/.bin/ts-node-dev',
-        'src/main',
-        '--colors',
-        '--transpileOnly',
-        '--debounce',
-        '1500',
+        "./scripts/wait-for-kafka.sh",
+        "kafka",
+        "9092",
+        "node_modules/.bin/ts-node-dev",
+        "src/main",
+        "--colors",
+        "--transpileOnly",
+        "--debounce",
+        "1500",
       ]
     depends_on:
       - kafka
       - admin
       - authentication
+  # user-database:
+  #   container_name: user-database
+  #   hostname: postgresql
+  #   image: postgres
+  #   env_file: env/.docker-compose.env
+  #   ports:
+  #     - '54321:5432'
+  #   volumes:
+  #     - ./server_db/user:/var/lib/postgresql/data
