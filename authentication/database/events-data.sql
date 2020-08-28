@@ -1,4 +1,4 @@
-INSERT INTO events (
+INSERT INTO "session_events" (
     event_id,
     aggregate_id,
     version,

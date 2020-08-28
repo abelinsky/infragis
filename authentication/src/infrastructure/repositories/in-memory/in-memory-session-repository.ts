@@ -22,6 +22,8 @@ export class InMemorySessionRepository implements SessionRepository {
     }
 
     this.logger.info('Stored in Sessions Event');
-    (await this.eventStore.getEvents(0)).forEach((e) => this.logger.info(`${JSON.stringify(e)}`));
+    (await this.eventStore.getAllEvents(0)).forEach((e) =>
+      this.logger.info(`${JSON.stringify(e)}`)
+    );
   }
 }

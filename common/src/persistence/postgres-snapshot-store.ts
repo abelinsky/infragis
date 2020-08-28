@@ -1,5 +1,5 @@
-import { SnapshotStore } from './snapshot-store';
-import { StoredSnapshot } from '../core/stored-snapshot';
+import { SnapshotStore } from '../event-sourcing';
+import { StoredSnapshot } from '../event-sourcing';
 
 export class PostgresSnapshotStore<T = any> implements SnapshotStore<T> {
   getSnapshot(id: any): Promise<StoredSnapshot<T> | undefined> {

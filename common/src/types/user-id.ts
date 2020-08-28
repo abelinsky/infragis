@@ -1,3 +1,3 @@
-import { ShortId } from './id';
+import { UUId } from './id';
 
-export class UserId extends ShortId {}
+export class UserId extends UUId {}

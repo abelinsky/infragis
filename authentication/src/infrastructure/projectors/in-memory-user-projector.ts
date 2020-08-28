@@ -31,7 +31,7 @@ export class InMemoryUserProjector extends DomesticProjector {
   }
 
   getEvents(from: number): Promise<StoredEvent[]> {
-    return this.eventStore.getEvents(from);
+    return this.eventStore.getAllEvents(from);
   }
 
   @ProjectionHandler(AuthenticationEvents.EventNames.UserCreated)

@@ -1,5 +1,5 @@
-import { StoredEvent } from '../core/stored-event';
 import { EventsStream } from '../core/events-stream';
+import { StoredEvent } from '../core/stored-event';
 
 export interface EventStore {
   /**
@@ -8,13 +8,14 @@ export interface EventStore {
    * @param aggregateId Id of the aggregate under request.
    * @param after The sequence number of the last event.
    */
-  getEventsForAggregate(aggregateId: string, after?: number): Promise<StoredEvent[]>;
+  getEventsStream(aggregateId: string, after?: number): Promise<StoredEvent[]>;
 
   /**
-   * Gets events from the specified version.
-   * @param from Version of the aggregates from which the events occured (including it).
+   * Gets events after the specified version.
+   * @param after Version of the aggregates after which the events occured
+   *     (not including `after` => greater than @param `after`).
    */
-  getEvents(from: number): Promise<StoredEvent[]>;
+  getAllEvents(after: number): Promise<StoredEvent[]>;
 
   /**
    * Tries to persist events.
@@ -23,7 +24,8 @@ export interface EventStore {
    * the version of the last event in the store then throws
    * an {@link OptimisticConcurrencyException}.
    * @param events Stream of events to be stored.
-   * @param expectedVersion Version of the aggregate (event owner) that has been already stored.
+   * @param expectedVersion Version of the aggregate (event owner) that has been
+   *     already stored.
    * @throws {OptimisticConcurrencyException}
    */
   storeEvents(events: EventsStream, expectedVersion: number): Promise<void>;

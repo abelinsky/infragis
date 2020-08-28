@@ -19,7 +19,12 @@
       "internalConsoleOptions": "openOnSessionStart",
       "env": {
         "global.environment": "dev",
-        "global.kafka.brokers": "localhost:9092"
+        "global.kafka.brokers": "localhost:9092",
+        "authentication.database.host": "localhost",
+        "authentication.database.port": "54320",
+        "authentication.database.name": "authentication",
+        "secrets.authentication-database.user": "admin",
+        "secrets.authentication-database.password": "admin12345"
       }
     },
 

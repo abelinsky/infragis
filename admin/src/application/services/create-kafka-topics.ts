@@ -29,7 +29,9 @@ export class CreateKafkaTopics {
       const topics = Object.values(NotificationTopics).map((topic) => topic.toString());
       const topicConfigs: ITopicConfig[] = topics.map((t) => ({ topic: t }));
       const result = await kafkaAdmin.createTopics({ topics: topicConfigs });
-      this.logger.info(result ? 'Topics are created.' : 'Topics have already been created.');
+      this.logger.info(
+        result ? 'Kafka topics are created.' : 'Kafka topics have already been created.'
+      );
 
       await kafkaAdmin.disconnect();
 

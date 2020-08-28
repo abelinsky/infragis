@@ -11,10 +11,12 @@ if (process.env['global.environment'] === 'dev' || !process.env['global.environm
 import {
   DI,
   GlobalConfig,
+  SecretsConfig,
   BaseLogger,
   InMemoryEventStore,
   InMemorySnaphotStore,
   GLOBAL_CONFIG,
+  SECRETS_CONFIG,
   LOGGER_TYPE,
   NOTIFICATION_PRODUCER,
   KafkaNotificationProducer,
@@ -32,6 +34,14 @@ import {
   InMemoryStore,
 } from '@infragis/common';
 
+// Persistence
+import {
+  EVENT_STORE,
+  EVENT_STORE_FACTORY,
+  PostgresEventStore,
+  postgresEventStoreFactory,
+} from '@infragis/common';
+
 import { AuthenticationConfig, AUTHENTICATION_CONFIG } from '@/main/config';
 import { AuthenticationServer } from '@/main/server';
 
@@ -41,8 +51,9 @@ import { EmailSignUp } from '@/application';
 // repositories
 import {
   InMemorySessionRepository,
-  InMemoryUserRepository,
+  //  InMemoryUserRepository,
   IN_MEMORY_USERS_STORE,
+  PostgresUserRepository,
 } from '@/infrastructure';
 
 import { InMemoryUserProjector, DOMESTIC_USER_PROJECTOR } from '@/infrastructure';
@@ -62,18 +73,23 @@ DI.registerSingleton(InMemoryUserProjector, InMemoryUserProjector);
 
 // Config, utils
 DI.registerSingleton(GLOBAL_CONFIG, GlobalConfig);
+DI.registerSingleton(SECRETS_CONFIG, SecretsConfig);
 DI.registerSingleton(AUTHENTICATION_CONFIG, AuthenticationConfig);
 DI.registerSingleton(LOGGER_TYPE, BaseLogger);
 
 // Repositories
 DI.registerSingleton(SESSION_REPOSITORY, InMemorySessionRepository);
-DI.registerSingleton(USER_REPOSITORY, InMemoryUserRepository);
+DI.registerSingleton(USER_REPOSITORY, PostgresUserRepository);
+
+// Persistence
+DI.registerIdentifiedProvider(EVENT_STORE, PostgresEventStore);
+DI.registerFactory(EVENT_STORE_FACTORY, postgresEventStoreFactory);
 
 /**
  * Other providers.
  */
 
-// Register listeners
+// Listeners
 DI.registerIdentifiedProvider(DOMAIN_EVENTS_LISTENER, DomainEventsListener);
 
 // UseCases
@@ -82,7 +98,7 @@ DI.registerIdentifiedProvider(EmailSignUp.USECASE_NAME, EmailSignUp.RequestEmail
 // Projectors
 DI.registerIdentifiedProvider(DOMESTIC_USER_PROJECTOR, InMemoryUserProjector);
 
-// Factories
+// Rpc
 DI.registerFactory(RPC_SERVER_FACTORY, rpcServerFactory);
 
 // Start execution
