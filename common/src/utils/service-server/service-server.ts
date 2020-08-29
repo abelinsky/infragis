@@ -1,11 +1,13 @@
-import { inject, postConstruct, interfaces } from 'inversify';
+import { inject, postConstruct, interfaces, injectable } from 'inversify';
 import * as http from 'http';
-import { ILogger, LOGGER_TYPE } from '../logger';
+import { ILogger } from '../logger';
 import { Daemon, getDaemonsCtrsFromMetadata } from './application-daemon';
 import { DI } from '../../dependency-injection';
+import { LOGGER_TYPE } from '../../dependency-injection';
 
 const DAEMON_TYPE = Symbol('DAEMON');
 
+@injectable()
 export abstract class ServiceServer {
   abstract handleShutdown(): Promise<void>;
   abstract healthcheck(): Promise<boolean>;

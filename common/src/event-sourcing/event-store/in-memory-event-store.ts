@@ -1,36 +1,37 @@
-import {inject, injectable, interfaces} from 'inversify';
-
-import {EventId, Id, Timestamp} from '../../types';
-import {EVENT_NAME_METADATA} from '../core/domain-event';
-import {EventsStream} from '../core/events-stream';
-import {StoredEvent} from '../core/stored-event';
-import {OptimisticConcurrencyException} from '../exceptions';
-import {DOMAIN_EVENTS_PUBLISHER, IDomainEventsPublisher} from '../publishing';
-
-import {EventStore} from './event-store';
+import { inject, injectable, interfaces } from 'inversify';
+import { EventId, Id, Timestamp } from '../../types';
+import { EVENT_NAME_METADATA } from '../core/domain-event';
+import { EventsStream } from '../core/events-stream';
+import { StoredEvent } from '../core/stored-event';
+import { OptimisticConcurrencyException } from '../exceptions';
+import { IDomainEventsPublisher } from '../publishing';
+import { EventStore } from './event-store';
+import { DOMAIN_EVENTS_PUBLISHER } from '../../dependency-injection';
 
 @injectable()
 export class InMemoryEventStore implements EventStore {
-  @inject(DOMAIN_EVENTS_PUBLISHER)
-  domainEventsPublisher!: IDomainEventsPublisher;
+  constructor(
+    @inject(DOMAIN_EVENTS_PUBLISHER)
+    protected domainEventsPublisher: IDomainEventsPublisher
+  ) {}
 
   private events: StoredEvent[] = [];
   private sequence: number = 0;
 
-  async getEventsStream(aggregateId: string, after?: number|undefined):
-      Promise<StoredEvent[]> {
-    return this.events.filter((event) => event.aggregateId === aggregateId)
+  async getEventsStream(aggregateId: string, after?: number | undefined): Promise<StoredEvent[]> {
+    return this.events
+      .filter((event) => event.aggregateId === aggregateId)
       .filter((event) => (after ? event.version > after : true))
       .sort((e1, e2) => e1.version - e2.version);
   }
 
   async getAllEvents(from: number = 0): Promise<StoredEvent[]> {
-    return this.events.filter((event) => event.version >= from)
+    return this.events
+      .filter((event) => event.version >= from)
       .sort((e1, e2) => e1.version - e2.version);
   }
 
-  async storeEvents(events: EventsStream, expectedVersion: number):
-      Promise<void> {
+  async storeEvents(events: EventsStream, expectedVersion: number): Promise<void> {
     if (!events.toArray().length) return;
 
     // Check for the Optimistic concurrency control issues.
@@ -38,8 +39,12 @@ export class InMemoryEventStore implements EventStore {
 
     if (lastEvent && lastEvent.version !== expectedVersion) {
       throw new OptimisticConcurrencyException(
-        lastEvent.name, events.aggregateId.toString(), expectedVersion,
-        lastEvent.sequence, lastEvent.eventId);
+        lastEvent.name,
+        events.aggregateId.toString(),
+        expectedVersion,
+        lastEvent.sequence,
+        lastEvent.eventId
+      );
     }
 
     // Store events
@@ -63,7 +68,8 @@ export class InMemoryEventStore implements EventStore {
   }
 
   private async getLastEvent(aggregateId: Id): Promise<StoredEvent> {
-    return this.events.filter((e) => e.aggregateId === aggregateId.toString())
+    return this.events
+      .filter((e) => e.aggregateId === aggregateId.toString())
       .sort((first, second) => second.version - first.version)[0];
   }
 }

@@ -1,11 +1,9 @@
 import { inject, injectable, interfaces } from 'inversify';
-import Knex from 'knex';
 import camelCase from 'camelcase';
 import decamelize from 'decamelize';
+import Knex from 'knex';
 import {
-  DOMAIN_EVENTS_PUBLISHER,
   EVENT_NAME_METADATA,
-  EVENT_STORE,
   EventsStream,
   EventStore,
   IDomainEventsPublisher,
@@ -13,7 +11,8 @@ import {
   StoredEvent,
 } from '../event-sourcing';
 import { EventId, Id, Timestamp } from '../types';
-import { ILogger, LOGGER_TYPE } from '../utils';
+import { ILogger } from '../utils';
+import { DOMAIN_EVENTS_PUBLISHER, EVENT_STORE, LOGGER_TYPE } from '../dependency-injection';
 
 export interface PostgresConnectionConfig {
   databaseHost: string;
@@ -121,7 +120,8 @@ export class PostgresEventStore implements EventStore {
         lastEvent.eventId
       );
     }
-    // Store events
+
+    // Create StoredEvent list
     let currentSequence = await this.getOffset();
     const inserts = events.toArray().map((e) => {
       currentSequence++;
@@ -140,7 +140,7 @@ export class PostgresEventStore implements EventStore {
     // Persist `inserts`
     await this.Events().insert(inserts);
 
-    // Publish events
+    // Publish domain events events
     this.domainEventsPublisher.publish(inserts);
   }
 

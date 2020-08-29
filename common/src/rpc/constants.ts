@@ -1,2 +1,0 @@
-export const RPC_SERVER_FACTORY = Symbol('RPC_SERVER_FACTORY');
-export const RPC_CLIENT_FACTORY = Symbol('RPC_CLIENT_FACTORY');

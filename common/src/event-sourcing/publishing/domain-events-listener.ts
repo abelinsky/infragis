@@ -4,11 +4,11 @@ import { filter, map } from 'rxjs/operators';
 import { Class } from 'utility-types';
 import { Aggregate } from '../core';
 import { StoredEvent } from '../core/stored-event';
-import { DOMAIN_EVENTS_PUBLISHER, IDomainEventsPublisher } from './domain-events-publisher';
+import { IDomainEventsPublisher } from './domain-events-publisher';
 import { EventName } from '../../types';
+import { DOMAIN_EVENTS_PUBLISHER } from '../../dependency-injection';
 
 export interface IDomainEventsListener {
-  //eventsSource: Observable<StoredEvent>;
   getListener(aggregateType?: Class<Aggregate> | RegExp): Observable<StoredEvent>;
 }
 
@@ -34,5 +34,3 @@ export class DomainEventsListener implements IDomainEventsListener {
     );
   }
 }
-
-export const DOMAIN_EVENTS_LISTENER = Symbol.for('__DomainEventsListener__');

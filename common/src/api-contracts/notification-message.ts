@@ -3,14 +3,15 @@ import * as path from 'path';
 import { StoredEvent } from '../event-sourcing';
 import { EventName } from '../types';
 import * as protobuf from 'protobufjs';
-import { LOGGER_TYPE, ILogger } from '../utils';
+import { ILogger } from '../utils';
+import { LOGGER_TYPE } from '../dependency-injection';
 
 export abstract class NotificationMessage {
   protected abstract name: string;
   protected abstract package: string;
   protected abstract protofile: string;
 
-  @inject(LOGGER_TYPE) logger!: ILogger;
+  constructor(@inject(LOGGER_TYPE) protected logger: ILogger) {}
 
   encode(event: StoredEvent): Buffer {
     const Message = this.getFromProtoDefinition();

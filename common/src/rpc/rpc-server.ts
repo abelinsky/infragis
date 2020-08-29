@@ -1,11 +1,12 @@
 import { inject, injectable, interfaces } from 'inversify';
 import * as grpc from '@grpc/grpc-js';
 import asyncRetry from 'async-retry';
-import { ILogger, LOGGER_TYPE } from '../utils';
+import { ILogger } from '../utils';
 import { ApiService, loadApiService } from '../api-contracts';
 import { RPC_HANDLERS } from './rpc-handler';
 import { EventSourcingErrorNames } from '../event-sourcing';
 import { RpcStatus } from './rpc-status';
+import { LOGGER_TYPE } from '../dependency-injection';
 
 @injectable()
 export class RpcServer {

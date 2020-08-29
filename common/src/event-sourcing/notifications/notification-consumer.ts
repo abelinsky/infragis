@@ -28,5 +28,3 @@ export interface INotificationConsumer {
    */
   getListener(topic: string | RegExp, consumerGroup: string): Observable<StoredEvent>;
 }
-
-export const NOTIFICATION_CONSUMER = Symbol.for('__INotificationConsumer__');

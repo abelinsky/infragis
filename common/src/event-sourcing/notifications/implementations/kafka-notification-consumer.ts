@@ -1,16 +1,15 @@
 import { inject, injectable, interfaces } from 'inversify';
 import { Consumer, Kafka, logLevel } from 'kafkajs';
-import { async, Observable, Observer } from 'rxjs';
+import { Observable, Observer } from 'rxjs';
 import shortid from 'shortid';
-
 import { decodeEventFromNotification } from '../../../api-contracts';
-import { GLOBAL_CONFIG, IConfig } from '../../../config';
+import { IConfig } from '../../../config';
 import { EventName } from '../../../types';
-import { ILogger, LOGGER_TYPE } from '../../../utils';
+import { ILogger } from '../../../utils';
 import { StoredEvent } from '../../core';
-import { INotificationConsumer, NOTIFICATION_CONSUMER } from '../notification-consumer';
-
+import { INotificationConsumer } from '../notification-consumer';
 import { EVENT_HEADER } from './kafka-notification-producer';
+import { GLOBAL_CONFIG, LOGGER_TYPE } from '../../../dependency-injection';
 
 @injectable()
 export class KafkaNotificationConsumer implements INotificationConsumer {
@@ -32,6 +31,9 @@ export class KafkaNotificationConsumer implements INotificationConsumer {
     return this.connected;
   }
 
+  /**
+   * Disconnects from kafka and stops listening.
+   */
   async disconnect(): Promise<boolean> {
     try {
       this.logger.warn('Disconnecting kafka consumer');
@@ -39,11 +41,18 @@ export class KafkaNotificationConsumer implements INotificationConsumer {
       this.logger.warn('kafka consumer has been disconnected');
       return true;
     } catch (error) {
-      this.logger.warn('Rrror occured while disconnecting kafka consumer', error);
+      this.logger.warn('Error occured while disconnecting kafka consumer', error);
     }
     return false;
   }
 
+  /**
+   * Connects to kafka, starts listening messages and pushing them to client of this consumer.
+   * Note that actual connection and pushing starts after subscribing to the Observable that
+   * is returned from this method.
+   * @param topic Topic that is used to oraganize notifications.
+   * @param consumerGroup A collective group of consumer instances.
+   */
   getListener(topic: string | RegExp, consumerGroup: string): Observable<StoredEvent> {
     if (!this.kafka) throw new Error('Kafka listener was not initialized properly.');
     if (!!this.kafkaConsumer)

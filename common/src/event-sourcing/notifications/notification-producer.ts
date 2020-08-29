@@ -24,5 +24,3 @@ export interface INotificationProducer {
    */
   publishNotifications(topic: string, events: StoredEvent[]): Promise<void>;
 }
-
-export const NOTIFICATION_PRODUCER = Symbol.for('__INotificationProducer__');

@@ -1,10 +1,11 @@
 import { injectable, inject, postConstruct } from 'inversify';
 import { INotificationProducer } from '../notification-producer';
 import { Kafka, Message, logLevel } from 'kafkajs';
-import { ILogger, LOGGER_TYPE } from '../../../utils';
+import { ILogger } from '../../../utils';
 import { StoredEvent } from '../../core';
 import { encodeEventToNotification } from '../../../api-contracts';
-import { GLOBAL_CONFIG, IConfig } from '../../../config';
+import { IConfig } from '../../../config';
+import { GLOBAL_CONFIG, LOGGER_TYPE } from '../../../dependency-injection';
 
 export const EVENT_HEADER = 'eventName';
 
@@ -35,6 +36,11 @@ export class KafkaNotificationProducer implements INotificationProducer {
     return this.connected;
   }
 
+  /**
+   * Pushes notifications to kafka.
+   * @param topic Topic to push notification to.
+   * @param events Stored domain events that are transformed into notification messages.
+   */
   async publishNotifications(topic: string, events: StoredEvent[]): Promise<void> {
     const alive = await this.establishConnection();
     if (!alive) {
@@ -59,6 +65,9 @@ export class KafkaNotificationProducer implements INotificationProducer {
     }
   }
 
+  /**
+   * Disconnects from kafks stops producing messages.
+   */
   async disconnect(): Promise<boolean> {
     try {
       if (this.kafkaProducer) await this.kafkaProducer.disconnect();

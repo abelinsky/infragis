@@ -1,11 +1,12 @@
 import { inject, injectable } from 'inversify';
 import { Subject, Observable } from 'rxjs';
 import { StoredEvent } from '../core/stored-event';
-import { LOGGER_TYPE, ILogger } from '../../utils';
+import { ILogger } from '../../utils';
+import { LOGGER_TYPE } from '../../dependency-injection';
 
 /**
  * Publishes events after saving them into a single source of truth.
- * Assumed to be used by subscribers inside Bounded Context (i.e. Service).
+ * Assumed to be used by subscribers inside Bounded Context (i.e. this service).
  */
 export interface IDomainEventsPublisher extends Observable<StoredEvent> {
   /**
@@ -20,11 +21,15 @@ export interface IDomainEventsPublisher extends Observable<StoredEvent> {
  */
 @injectable()
 export class DomainEventsPublisher extends Subject<StoredEvent> implements IDomainEventsPublisher {
-  @inject(LOGGER_TYPE) logger!: ILogger;
+  constructor(@inject(LOGGER_TYPE) protected logger: ILogger) {
+    super();
+  }
 
+  /**
+   * Publishes (pushes) the events to observers.
+   * @param events Persisted events to be published.
+   */
   publish(events: StoredEvent[]): void {
     events.forEach((e) => this.next(e));
   }
 }
-
-export const DOMAIN_EVENTS_PUBLISHER = Symbol.for('__IDomainEventsPublisher__');

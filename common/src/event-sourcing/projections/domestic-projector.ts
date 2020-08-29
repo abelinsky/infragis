@@ -3,9 +3,9 @@ import { from, Unsubscribable } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import { Class } from 'utility-types';
 import { Aggregate } from '../core';
-import { DOMAIN_EVENTS_LISTENER, IDomainEventsListener } from '../publishing';
-
+import { IDomainEventsListener } from '../publishing';
 import { Projector } from './projector';
+import { DOMAIN_EVENTS_LISTENER, LOGGER_TYPE } from '../../dependency-injection';
 
 /**
  * Internal Projector which listens to domain events published internally
@@ -19,8 +19,12 @@ export abstract class DomesticProjector extends Projector {
   abstract aggregateClass: Class<Aggregate> | undefined = undefined;
   private subscription: Unsubscribable | undefined = undefined;
 
-  @inject(DOMAIN_EVENTS_LISTENER)
-  protected domainEventListener!: IDomainEventsListener;
+  constructor(
+    @inject(DOMAIN_EVENTS_LISTENER)
+    protected domainEventListener: IDomainEventsListener
+  ) {
+    super();
+  }
 
   async start(): Promise<void> {
     this.subscription = this.domainEventListener

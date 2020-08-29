@@ -2,7 +2,8 @@ import * as grpc from '@grpc/grpc-js';
 import { injectable, interfaces, inject } from 'inversify';
 import { ApiService } from '../api-contracts';
 import { loadApiService } from '../api-contracts';
-import { ILogger, LOGGER_TYPE } from '../utils';
+import { ILogger } from '../utils';
+import { LOGGER_TYPE } from '../dependency-injection';
 
 @injectable()
 export class RpcClient<T> {
@@ -13,16 +14,9 @@ export class RpcClient<T> {
 
   constructor(@inject(LOGGER_TYPE) private logger: ILogger) {}
 
-  initialize(
-    host: string,
-    service: ApiService,
-    port: number = this._defaultPort
-  ) {
+  initialize(host: string, service: ApiService, port: number = this._defaultPort) {
     const serviceDef = loadApiService(service);
-    this.grpcClient = new serviceDef(
-      `${host}:${port}`,
-      grpc.credentials.createInsecure()
-    );
+    this.grpcClient = new serviceDef(`${host}:${port}`, grpc.credentials.createInsecure());
 
     this._attachMethods(Object.keys(serviceDef.service));
   }
@@ -37,8 +31,7 @@ export class RpcClient<T> {
       (this.client as any)[methodName] = (payload: any) => {
         return new Promise((resolve, reject) => {
           this.logger.info('Called in rpc client', methodName, payload);
-          const method: grpc.requestCallback<any> = (this
-            .grpcClient as any)[methodName](
+          const method: grpc.requestCallback<any> = (this.grpcClient as any)[methodName](
             payload,
             (err: grpc.ServiceError, response: any) => {
               if (err) {
@@ -60,9 +53,7 @@ export type RpcClientFactory = (options: {
   port?: number;
 }) => RpcClient<any>;
 
-export const rpcClientFactory = (
-  context: interfaces.Context
-): RpcClientFactory => {
+export const rpcClientFactory = (context: interfaces.Context): RpcClientFactory => {
   return ({ host, service, port }) => {
     const client = context.container.get(RpcClient);
     client.initialize(host, service, port);

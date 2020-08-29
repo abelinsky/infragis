@@ -1,9 +1,10 @@
 import { injectable, inject, postConstruct } from 'inversify';
 import { Unsubscribable } from 'rxjs';
 import { Class } from 'utility-types';
-import { DOMAIN_EVENTS_LISTENER, IDomainEventsListener } from './domain-events-listener';
+import { IDomainEventsListener } from './domain-events-listener';
 import { DomainEventClass, EVENT_NAME_METADATA, StoredEvent, Aggregate } from '../core';
 import { EventName } from '../../types';
+import { DOMAIN_EVENTS_LISTENER } from '../../dependency-injection';
 
 @injectable()
 export abstract class DomainEventsHandler {

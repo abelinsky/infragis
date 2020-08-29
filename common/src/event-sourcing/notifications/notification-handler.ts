@@ -1,12 +1,10 @@
 import { inject, injectable, postConstruct } from 'inversify';
 import { Unsubscribable } from 'rxjs';
-import { PickByValue } from 'utility-types';
-
-import { ILogger, LOGGER_TYPE } from '../../utils';
+import { ILogger } from '../../utils';
 import { StoredEvent } from '../core';
-
-import { INotificationConsumer, NOTIFICATION_CONSUMER } from './notification-consumer';
+import { INotificationConsumer } from './notification-consumer';
 import { NOTIFICATIONS_HANDLER_TOPICS } from './on-notification';
+import { LOGGER_TYPE, NOTIFICATION_CONSUMER } from '../../dependency-injection';
 
 /**
  * Base class for handling notification events.
@@ -24,9 +22,11 @@ import { NOTIFICATIONS_HANDLER_TOPICS } from './on-notification';
 export abstract class NotificationHandler {
   abstract consumerGroup: string;
 
-  @inject(NOTIFICATION_CONSUMER)
-  private notificationConsumer!: INotificationConsumer;
-  @inject(LOGGER_TYPE) protected logger!: ILogger;
+  constructor(
+    @inject(NOTIFICATION_CONSUMER)
+    private notificationConsumer: INotificationConsumer,
+    @inject(LOGGER_TYPE) protected logger: ILogger
+  ) {}
 
   private subscription: Unsubscribable | undefined = undefined;
 

@@ -8,8 +8,6 @@ export interface ILogger {
   debug: (...text: string[]) => void;
 }
 
-export const LOGGER_TYPE = Symbol.for('ILogger');
-
 @injectable()
 export class BaseLogger implements ILogger {
   private chalk = new chalk.Instance({ level: 1 });

@@ -30,5 +30,3 @@ export interface EventStore {
    */
   storeEvents(events: EventsStream, expectedVersion: number): Promise<void>;
 }
-
-export const EVENT_STORE = Symbol.for('__EventStore__');
