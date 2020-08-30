@@ -18,3 +18,17 @@ CREATE TABLE IF NOT EXISTS "user_events" (
   "sequence" serial NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "session_snapshots" (
+  "aggregate_id" uuid NOT NULL,
+  "version" serial NOT NULL,
+  "data" jsonb NOT NULL,
+  CONSTRAINT "ss_id" PRIMARY KEY (aggregate_id, version)
+);
+
+CREATE TABLE IF NOT EXISTS "user_snapshots" (
+  "aggregate_id" uuid NOT NULL,
+  "version" serial NOT NULL,
+  "data" jsonb NOT NULL,
+  CONSTRAINT "us_id" PRIMARY KEY (aggregate_id, version)
+);
+

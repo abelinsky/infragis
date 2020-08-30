@@ -1,4 +1,4 @@
-import { inject, injectable } from 'inversify';
+import { inject, injectable, decorate } from 'inversify';
 import { Subject, Observable } from 'rxjs';
 import { StoredEvent } from '../core/stored-event';
 import { ILogger } from '../../utils';

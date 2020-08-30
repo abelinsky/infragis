@@ -1,6 +1,6 @@
 {
   "name": "@infragis/common",
-  "version": "0.1.11",
+  "version": "0.1.16",
   "description": "Common package of Infragis platform",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,8 +12,10 @@
     "build": "npm run clean && tsc",
     "postbuild": "cpy '**/*' '!**/*.ts' ../dist/ --cwd=src/ --no-overwrite --parents",
     "pub": "npm version patch && npm run build && npm publish",
+    "pub:pre": "npm version prerelease && npm run build && npm publish",
     "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
-    "test": ""
+    "test": "",
+    "cpy:hard": "npm run build && del '../authentication/node_modules/@infragis/common/dist/*' --force && cpy 'dist/' '../authentication/node_modules/@infragis/common/' --no-overwrite --parents"
   },
   "keywords": [],
   "author": "Alexander Belinsky",
@@ -31,6 +33,7 @@
     "express": "^4.17.1",
     "express-validator": "^6.6.1",
     "inversify": "^5.0.1",
+    "inversify-inject-decorators": "^3.1.0",
     "jsonwebtoken": "^8.5.1",
     "kafkajs": "^1.12.0",
     "knex": "^0.21.5",

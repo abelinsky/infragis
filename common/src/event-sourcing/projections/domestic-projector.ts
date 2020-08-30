@@ -1,4 +1,4 @@
-import { inject, injectable, postConstruct } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { from, Unsubscribable } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import { Class } from 'utility-types';

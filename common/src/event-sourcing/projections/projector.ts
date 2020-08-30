@@ -1,6 +1,6 @@
 import { ILogger } from '../../utils';
 import { StoredEvent } from '../core/stored-event';
-import { injectable, unmanaged, inject } from 'inversify';
+import { injectable, inject } from 'inversify';
 import { LOGGER_TYPE } from '../../dependency-injection';
 
 export interface IProjector {

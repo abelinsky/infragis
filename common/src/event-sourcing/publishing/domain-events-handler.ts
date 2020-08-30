@@ -8,7 +8,8 @@ import { DOMAIN_EVENTS_LISTENER } from '../../dependency-injection';
 
 @injectable()
 export abstract class DomainEventsHandler {
-  @inject(DOMAIN_EVENTS_LISTENER) private eventsListener!: IDomainEventsListener;
+  @inject(DOMAIN_EVENTS_LISTENER)
+  private eventsListener!: IDomainEventsListener;
 
   private subscription: Unsubscribable | undefined = undefined;
   /**

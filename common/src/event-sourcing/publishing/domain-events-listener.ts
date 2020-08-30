@@ -14,7 +14,10 @@ export interface IDomainEventsListener {
 
 @injectable()
 export class DomainEventsListener implements IDomainEventsListener {
-  constructor(@inject(DOMAIN_EVENTS_PUBLISHER) private eventPublisher: IDomainEventsPublisher) {}
+  constructor(
+    @inject(DOMAIN_EVENTS_PUBLISHER)
+    private eventPublisher: IDomainEventsPublisher
+  ) {}
 
   protected get eventsSource(): Observable<StoredEvent> {
     return this.eventPublisher;

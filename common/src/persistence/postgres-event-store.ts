@@ -13,21 +13,15 @@ import {
 import { EventId, Id, Timestamp } from '../types';
 import { ILogger } from '../utils';
 import { DOMAIN_EVENTS_PUBLISHER, EVENT_STORE, LOGGER_TYPE } from '../dependency-injection';
-
-export interface PostgresConnectionConfig {
-  databaseHost: string;
-  databasePort: number;
-  databaseName: string;
-  databaseUser: string;
-  databasePassword: string;
-  tableName: string;
-}
+import { PostgresConnectionConfig } from './postgres-connection-config';
 
 @injectable()
 export class PostgresEventStore implements EventStore {
-  @inject(DOMAIN_EVENTS_PUBLISHER)
-  domainEventsPublisher!: IDomainEventsPublisher;
-  @inject(LOGGER_TYPE) protected logger!: ILogger;
+  constructor(
+    @inject(DOMAIN_EVENTS_PUBLISHER)
+    private domainEventsPublisher: IDomainEventsPublisher,
+    @inject(LOGGER_TYPE) protected logger: ILogger
+  ) {}
 
   private config: PostgresConnectionConfig | undefined = undefined;
   private _knex!: Knex;
@@ -169,7 +163,7 @@ export const postgresEventStoreFactory = (
     const store = context.container.get(EVENT_STORE);
     if (!(store instanceof PostgresEventStore)) {
       throw new Error(
-        'Cannot find appropriate binding for EVENT_STORE identifier. Probably, you"v binded it to class that is not assignable to PostgresEventStore or have not binded it at all.'
+        'Cannot find appropriate binding for EVENT_STORE identifier. Probably, you"v binded it to a class that is not assignable to PostgresEventStore or have not binded it at all.'
       );
     }
     store.initialize(config);

@@ -1,4 +1,4 @@
-import { inject, injectable, interfaces } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { Consumer, Kafka, logLevel } from 'kafkajs';
 import { Observable, Observer } from 'rxjs';
 import shortid from 'shortid';

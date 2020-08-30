@@ -21,14 +21,13 @@ export class AuthenticationServer extends ServiceServer implements Authenticatio
     methodsHandlerInstance: this,
   });
 
-  @inject(EmailSignUp.USECASE_NAME)
-  private emailSignupUseCase: IUseCase<AuthenticationCommands.Service, EmailSignUp.ServiceMethod>;
-
   constructor(
     @inject(GLOBAL_CONFIG) private globalConfig: IConfig,
     @inject(AUTHENTICATION_CONFIG) private gatewayConfig: IConfig,
     @inject(LOGGER_TYPE) private logger: ILogger,
-    @inject(RPC_SERVER_FACTORY) private rpcServerFactory: RpcServerFactory
+    @inject(RPC_SERVER_FACTORY) private rpcServerFactory: RpcServerFactory,
+    @inject(EmailSignUp.USECASE_NAME)
+    private emailSignupUseCase: IUseCase<AuthenticationCommands.Service, EmailSignUp.ServiceMethod>
   ) {
     super();
   }

@@ -1,4 +1,4 @@
-import { inject, injectable, interfaces } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { EventId, Id, Timestamp } from '../../types';
 import { EVENT_NAME_METADATA } from '../core/domain-event';
 import { EventsStream } from '../core/events-stream';

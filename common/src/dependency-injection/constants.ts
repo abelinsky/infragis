@@ -11,6 +11,7 @@ export const NOTIFICATION_CONSUMER = Symbol.for('__INotificationConsumer__');
 export const EVENT_STORE = Symbol.for('__EventStore__');
 export const EVENT_STORE_FACTORY = Symbol.for('__<Placeholder>EventStoreFactory__');
 export const SNAPSHOT_STORE = Symbol.for('__SnapshotStore__');
+export const SNAPSHOT_STORE_FACTORY = Symbol.for('__<Placeholder>SnapshotStoreFactory__');
 
 // Rpc
 export const RPC_SERVER_FACTORY = Symbol.for('RPC_SERVER_FACTORY');

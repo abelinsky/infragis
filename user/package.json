@@ -27,7 +27,7 @@
   },
   "keywords": [],
   "dependencies": {
-    "@infragis/common": "0.1.0",
+    "@infragis/common": "^0.1.16",
     "@types/body-parser": "^1.19.0",
     "body-parser": "^1.19.0",
     "inversify": "^5.0.1",

@@ -1,11 +1,13 @@
-import { inject, postConstruct, interfaces, injectable } from 'inversify';
 import * as http from 'http';
-import { ILogger } from '../logger';
-import { Daemon, getDaemonsCtrsFromMetadata } from './application-daemon';
+import { inject, injectable, interfaces, postConstruct } from 'inversify';
+
 import { DI } from '../../dependency-injection';
 import { LOGGER_TYPE } from '../../dependency-injection';
+import { ILogger } from '../logger';
 
-const DAEMON_TYPE = Symbol('DAEMON');
+import { Daemon, getDaemonsCtrsFromMetadata } from './application-daemon';
+
+const DAEMON_TYPE = Symbol.for('DAEMON');
 
 @injectable()
 export abstract class ServiceServer {
@@ -16,6 +18,7 @@ export abstract class ServiceServer {
   private signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
 
   @inject(LOGGER_TYPE) private _logger!: ILogger;
+
   private applicationDaemons: Daemon[] = [];
 
   constructor(

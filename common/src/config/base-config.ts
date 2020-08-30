@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import { injectable } from 'inversify';
+import { injectable, unmanaged } from 'inversify';
 
 import { IConfig } from './contracts/iconfig';
 
@@ -11,7 +11,7 @@ export abstract class BaseConfig implements IConfig {
   private readonly importedKeysLabel = 'shared.imports';
   private readonly exportedKeysLabel = 'shared.exports';
 
-  constructor(namespace: string, dotenvName?: string) {
+  constructor(@unmanaged() namespace: string, @unmanaged() dotenvName?: string) {
     const { parsed } = dotenv.config({
       path: dotenvName ? `.${dotenvName}.env` : '.env',
     });
@@ -19,18 +19,12 @@ export abstract class BaseConfig implements IConfig {
 
     const intenalKeys = this.keysStartingWith(`${namespace}.`);
 
-    const importedKeys = this.getArrayFromEnv(
-      `${namespace}.${this.importedKeysLabel}`
-    );
+    const importedKeys = this.getArrayFromEnv(`${namespace}.${this.importedKeysLabel}`);
 
     const externalKeys: string[] = [];
     importedKeys.forEach((name) => {
-      const externalExportedKeys = this.getArrayFromEnv(
-        `${name}.${this.exportedKeysLabel}`
-      );
-      externalKeys.push(
-        ...externalExportedKeys.map((k) => `${name}.${k}`)
-      );
+      const externalExportedKeys = this.getArrayFromEnv(`${name}.${this.exportedKeysLabel}`);
+      externalKeys.push(...externalExportedKeys.map((k) => `${name}.${k}`));
     });
 
     this.setConfig(intenalKeys);
@@ -38,10 +32,8 @@ export abstract class BaseConfig implements IConfig {
   }
 
   get(identifier: string, alternative?: string): string {
-    const value =
-      this.config[identifier] || this.getEnvVar(identifier) || alternative;
-    if (!value)
-      throw new Error(`No config value with ${identifier} found.`);
+    const value = this.config[identifier] || this.getEnvVar(identifier) || alternative;
+    if (!value) throw new Error(`No config value with ${identifier} found.`);
     return value;
   }
 
@@ -74,12 +66,8 @@ export abstract class BaseConfig implements IConfig {
 
   private keysStartingWith(starting: string): string[] {
     const allKeys = [
-      ...Object.keys(this.parsed).filter((key) =>
-        key.startsWith(starting)
-      ),
-      ...Object.keys(process.env).filter((key) =>
-        key.startsWith(starting)
-      ),
+      ...Object.keys(this.parsed).filter((key) => key.startsWith(starting)),
+      ...Object.keys(process.env).filter((key) => key.startsWith(starting)),
     ];
     return allKeys.filter((key, index) => index === allKeys.indexOf(key));
   }
