@@ -2,18 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [Unreleased]
+
+This version allows:
+
+- To persist events and snapshots to PostgreSQL
 
 ### Added
 
-- `persistence` module and Postgres Event Store based on `knex`
+- new `persistence` module with PostgresEventStore, PostgresSnapshotStore
+- `dependency-injection` module: default bindings
 
 ### Changed
 
-- ...
+- Event and snapshot storage is set to Postgres by default
 
 ### Removed
 

@@ -13,7 +13,7 @@ export abstract class Daemon {
 }
 
 /**
- * Decorator for {@link ServiceDaemon}.
+ * Decorator for {@link Daemon}.
  */
 
 export const DAEMONS_METADATA = '__DaemonsList___';

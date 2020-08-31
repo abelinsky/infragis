@@ -6,8 +6,10 @@ import { LOGGER_TYPE } from '../../dependency-injection';
 import { ILogger } from '../logger';
 
 import { Daemon, getDaemonsCtrsFromMetadata } from './application-daemon';
+import { getJobCtrsFromMetadata, Job } from './job';
 
 const DAEMON_TYPE = Symbol.for('DAEMON');
+const JOB_TYPE = Symbol.for('Job');
 
 @injectable()
 export abstract class ServiceServer {
@@ -51,13 +53,32 @@ export abstract class ServiceServer {
 
   @postConstruct()
   async initialize() {
+    // Execute Application Jobs
+    this.registerJobs();
+    await this.executeJobs();
+
+    // Start Daemons
     this.registerDaemons();
     await this.startDaemons();
+
     this._logger.info(
-      `Server has been initialized ${
+      `🚀  Server has been initialized ${
         this.healthcheck() ? 'and is running' : 'but healthcheck failed'
       }...`
     );
+  }
+
+  private registerJobs(): void {
+    const jobs = getJobCtrsFromMetadata();
+    for (const ctr of jobs) {
+      const name = ctr.name;
+
+      if (this.container.isBoundNamed(JOB_TYPE, name)) {
+        throw new Error(`Two jobs cannot have the same name: ${name}`);
+      }
+
+      this.container.bind(JOB_TYPE).to(ctr).whenTargetNamed(name);
+    }
   }
 
   private registerDaemons(): void {
@@ -73,17 +94,37 @@ export abstract class ServiceServer {
     }
   }
 
+  private async executeJobs(): Promise<void> {
+    let jobs: Job[] = [];
+    if (this.container.isBound(JOB_TYPE)) {
+      jobs = this.container.getAll<Job>(JOB_TYPE);
+    }
+    if (!jobs.length) return;
+
+    this._logger.info(`Performing ${jobs.length} job(s) execution...`);
+    for (const job of jobs) {
+      this._logger.info(`   executing ${job.name} job...`);
+      const result = await job.execute();
+      result
+        ? this._logger.warn(`   failed to execute ${job.name}.`)
+        : this._logger.info(`   job ${job.name} successfully finished.`);
+    }
+  }
+
   private async startDaemons(): Promise<void> {
     if (this.container.isBound(DAEMON_TYPE)) {
       this.applicationDaemons = this.container.getAll<Daemon>(DAEMON_TYPE);
     }
+    if (!this.applicationDaemons.length) return;
 
+    this._logger.info(`Starting ${this.applicationDaemons.length} daemons(s) ...`);
     for (const daemon of this.applicationDaemons) {
       this._logger.info(`   starting daemon ${daemon.name}...`);
       await daemon.start();
     }
-
-    this._logger.info(`${this.applicationDaemons.length} daemons have been started...`);
+    this._logger.info(
+      `${this.applicationDaemons.length} daemons have been started successfully...`
+    );
   }
 
   private async stopDaemons() {
