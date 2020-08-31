@@ -1,5 +1,6 @@
 import { EventsStream } from '../core/events-stream';
 import { StoredEvent } from '../core/stored-event';
+import { IDatabase } from '../../persistence';
 
 export interface EventStore {
   /**
@@ -30,3 +31,10 @@ export interface EventStore {
    */
   storeEvents(events: EventsStream, expectedVersion: number): Promise<void>;
 }
+
+/**
+ * Type for creating EventStore instance.
+ * @param tableName Event store table name.
+ * @param database IDatabase implementation instance where to store events, or default database if not defined.
+ */
+export type EventStoreFactory = (tableName: string, database?: IDatabase) => EventStore;

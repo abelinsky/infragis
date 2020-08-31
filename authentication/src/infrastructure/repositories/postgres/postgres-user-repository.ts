@@ -1,15 +1,12 @@
 import { User, UserRepository } from '@/domain';
 import { IN_MEMORY_USERS_STORE } from '@/infrastructure/constants';
-import { AUTHENTICATION_CONFIG } from '@/main/config';
 import {
-  IConfig,
   InMemoryStore,
-  SECRETS_CONFIG,
   UserId,
   EVENT_STORE_FACTORY,
-  PostgresEventStoreFactory,
+  EventStoreFactory,
   SNAPSHOT_STORE_FACTORY,
-  PostgresSnapshotStoreFactory,
+  SnapshotStoreFactory,
 } from '@infragis/common';
 import { inject, injectable } from 'inversify';
 
@@ -21,30 +18,12 @@ export class PostgresUserRepository implements UserRepository {
    */
   private readonly snapshotStoreInterval = 50;
 
-  private readonly connectionCredentials = {
-    databaseHost: this.config.get('authentication.database.host'),
-    databasePort: this.config.getNumber('authentication.database.port'),
-    databaseName: this.config.get('authentication.database.name'),
-    databaseUser: this.secretsConfig.get('secrets.authentication-database.user'),
-    databasePassword: this.secretsConfig.get('secrets.authentication-database.password'),
-  };
-
-  private eventStore = this.eventStoreFactory({
-    ...this.connectionCredentials,
-    tableName: 'user_events',
-  });
-
-  private snapshotStore = this.snapshotStoreFactory({
-    ...this.connectionCredentials,
-    tableName: 'user_snapshots',
-  });
+  private eventStore = this.eventStoreFactory('user_events');
+  private snapshotStore = this.snapshotStoreFactory('user_snapshots');
 
   constructor(
-    @inject(AUTHENTICATION_CONFIG) private config: IConfig,
-    @inject(SECRETS_CONFIG) private secretsConfig: IConfig,
-    @inject(EVENT_STORE_FACTORY) private eventStoreFactory: PostgresEventStoreFactory,
-    @inject(SNAPSHOT_STORE_FACTORY) private snapshotStoreFactory: PostgresSnapshotStoreFactory,
-
+    @inject(EVENT_STORE_FACTORY) private eventStoreFactory: EventStoreFactory,
+    @inject(SNAPSHOT_STORE_FACTORY) private snapshotStoreFactory: SnapshotStoreFactory,
     // TODO: Replace with PostgresStore
     @inject(IN_MEMORY_USERS_STORE) private usersStore: InMemoryStore
   ) {}

@@ -67,7 +67,10 @@ services:
 
   authentication:
     container_name: authentication
-    image: node:lts-alpine
+    image: node:12-alpine
+    # build:
+    #  context: ./authentication
+    #  dockerfile: Dockerfile
     working_dir: /usr/src/app
     volumes:
       - ./authentication/package.json:/usr/src/app/package.json
@@ -76,8 +79,10 @@ services:
       - ./authentication/node_modules:/usr/src/app/node_modules
       - ./scripts:/usr/src/app/scripts
     env_file: env/.docker-compose.env
-    command:
-      [
+    restart: always
+    command: [
+        # "./scripts/wait-for-it.sh",
+        # "authentication-database:5432",
         './scripts/wait-for-kafka.sh',
         'kafka',
         '9092',
@@ -88,7 +93,7 @@ services:
         '--debounce',
         '1500',
       ]
-    # command: ["./wait-for-it.sh", "db:5432", "--", "node", "index.js"]
+    # command: ["./wait-for-it.sh", "authentication-database:5432", "--", "node", "index.js"]
     depends_on:
       - kafka
       - authentication-database
@@ -99,9 +104,8 @@ services:
     ports:
       - '54320:5432'
     volumes:
-      - ./authentication/database/install-extensions.sql:/docker-entrypoint-initdb.d/1-install-extensions.sql
-      - ./authentication/database/setup.sql:/docker-entrypoint-initdb.d/2-setup.sql
-      - ./authentication/database/events-data.sql:/docker-entrypoint-initdb.d/3-events-data.sql
+      - ./authentication/src/infrastructure/database/install-extensions.sql:/docker-entrypoint-initdb.d/1-install-extensions.sql
+      - ./authentication/src/infrastructure/database/setup.sql:/docker-entrypoint-initdb.d/2-setup.sql
       #- ./server_db/authentication:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${AUTHENTICATION_DATABASE_USER}

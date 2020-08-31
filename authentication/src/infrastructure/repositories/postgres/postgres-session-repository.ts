@@ -1,11 +1,8 @@
 import { Session, SessionRepository } from '@/domain';
-import { AUTHENTICATION_CONFIG } from '@/main/config';
 import {
+  EventStoreFactory,
+  SnapshotStoreFactory,
   EVENT_STORE_FACTORY,
-  IConfig,
-  PostgresEventStoreFactory,
-  PostgresSnapshotStoreFactory,
-  SECRETS_CONFIG,
   SNAPSHOT_STORE_FACTORY,
 } from '@infragis/common';
 import { inject, injectable } from 'inversify';
@@ -19,29 +16,13 @@ export class PostgresSessionRepository implements SessionRepository {
    */
   private readonly snapshotStoreInterval = 50;
 
-  private readonly connectionCredentials = {
-    databaseHost: this.config.get('authentication.database.host'),
-    databasePort: this.config.getNumber('authentication.database.port'),
-    databaseName: this.config.get('authentication.database.name'),
-    databaseUser: this.secretsConfig.get('secrets.authentication-database.user'),
-    databasePassword: this.secretsConfig.get('secrets.authentication-database.password'),
-  };
-
-  private eventStore = this.eventStoreFactory({
-    ...this.connectionCredentials,
-    tableName: 'session_events',
-  });
-
-  private snapshotStore = this.snapshotStoreFactory({
-    ...this.connectionCredentials,
-    tableName: 'session_snapshots',
-  });
+  private eventStore = this.eventStoreFactory('session_events');
+  private snapshotStore = this.snapshotStoreFactory('session_snapshots');
 
   constructor(
-    @inject(AUTHENTICATION_CONFIG) private config: IConfig,
-    @inject(SECRETS_CONFIG) private secretsConfig: IConfig,
-    @inject(EVENT_STORE_FACTORY) private eventStoreFactory: PostgresEventStoreFactory,
-    @inject(SNAPSHOT_STORE_FACTORY) private snapshotStoreFactory: PostgresSnapshotStoreFactory
+    @inject(EVENT_STORE_FACTORY)
+    private eventStoreFactory: EventStoreFactory,
+    @inject(SNAPSHOT_STORE_FACTORY) private snapshotStoreFactory: SnapshotStoreFactory
   ) {}
 
   async store(session: Session): Promise<void> {

@@ -7,8 +7,10 @@ import {
   RpcServerFactory,
   ServiceServer,
   StoredEvent,
+  DATABASE_FACTORY,
+  DatabaseFactory,
 } from '@infragis/common';
-import { GLOBAL_CONFIG, IConfig, ILogger, LOGGER_TYPE } from '@infragis/common';
+import { GLOBAL_CONFIG, SECRETS_CONFIG, IConfig, ILogger, LOGGER_TYPE } from '@infragis/common';
 import { AuthenticationCommands, AuthenticationCommandsService } from '@infragis/common';
 import { IUseCase } from '@infragis/common';
 import { inject, injectable } from 'inversify';
@@ -21,11 +23,26 @@ export class AuthenticationServer extends ServiceServer implements Authenticatio
     methodsHandlerInstance: this,
   });
 
+  private readonly databaseCredentials = {
+    databaseHost: this.config.get('authentication.database.host'),
+    databasePort: this.config.getNumber('authentication.database.port'),
+    databaseName: this.config.get('authentication.database.name'),
+    databaseUser: this.secretsConfig.get('secrets.authentication-database.user'),
+    databasePassword: this.secretsConfig.get('secrets.authentication-database.password'),
+  };
+
+  // We call for initializing database here and keep the pointer to it
+  // during the life of our service. The Database is Singleton so
+  // it can be injected anywhere through `DATABASE` identifier.
+  private database = this.databaseFactory({ ...this.databaseCredentials });
+
   constructor(
     @inject(GLOBAL_CONFIG) private globalConfig: IConfig,
-    @inject(AUTHENTICATION_CONFIG) private gatewayConfig: IConfig,
+    @inject(SECRETS_CONFIG) private secretsConfig: IConfig,
+    @inject(AUTHENTICATION_CONFIG) private config: IConfig,
     @inject(LOGGER_TYPE) private logger: ILogger,
     @inject(RPC_SERVER_FACTORY) private rpcServerFactory: RpcServerFactory,
+    @inject(DATABASE_FACTORY) private databaseFactory: DatabaseFactory,
     @inject(EmailSignUp.USECASE_NAME)
     private emailSignupUseCase: IUseCase<AuthenticationCommands.Service, EmailSignUp.ServiceMethod>
   ) {
@@ -46,15 +63,10 @@ export class AuthenticationServer extends ServiceServer implements Authenticatio
 
   async handleShutdown(): Promise<void> {
     await this.rpcServer.disconnect();
+    await this.database.closeConnection();
   }
 
   async healthcheck(): Promise<boolean> {
     return this.rpcServer.started;
   }
-
-  // executeUseCase<T extends keyof AuthenticationCommands.Service>(useCaseName: T) {}
-
-  // test(): void {
-  //   this.executeUseCase('requestEmailSignUp');
-  // }
 }

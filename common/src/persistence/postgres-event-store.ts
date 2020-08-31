@@ -1,19 +1,23 @@
 import { inject, injectable, interfaces } from 'inversify';
-import camelCase from 'camelcase';
-import decamelize from 'decamelize';
-import Knex from 'knex';
 import {
   EVENT_NAME_METADATA,
   EventsStream,
   EventStore,
+  EventStoreFactory,
   IDomainEventsPublisher,
   OptimisticConcurrencyException,
   StoredEvent,
 } from '../event-sourcing';
 import { EventId, Id, Timestamp } from '../types';
 import { ILogger } from '../utils';
-import { DOMAIN_EVENTS_PUBLISHER, EVENT_STORE, LOGGER_TYPE } from '../dependency-injection';
-import { PostgresConnectionConfig } from './postgres-connection-config';
+import {
+  DOMAIN_EVENTS_PUBLISHER,
+  EVENT_STORE,
+  LOGGER_TYPE,
+  DATABASE,
+} from '../dependency-injection';
+import { IDatabase } from './database';
+import { PostgresDatabase } from './postgres-database';
 
 @injectable()
 export class PostgresEventStore implements EventStore {
@@ -23,64 +27,21 @@ export class PostgresEventStore implements EventStore {
     @inject(LOGGER_TYPE) protected logger: ILogger
   ) {}
 
-  private config: PostgresConnectionConfig | undefined = undefined;
-  private _knex!: Knex;
-
-  private get knex() {
-    if (!this._knex) {
-      throw new Error(
-        `Knex is not initialized. Probably, initialize() was not called for ${this.constructor.name}`
-      );
-    }
-    return this._knex;
-  }
+  private database!: PostgresDatabase;
+  private tableName!: string;
 
   Events = () => {
-    if (!this.knex) {
+    if (!this.database) {
       throw new Error(
-        `Knex is not initialized. Probably, initialize() was not called for ${this.constructor.name}`
+        `Database is not initialized. Probably, initialize() was not called for ${this.constructor.name}.`
       );
     }
-    return this.knex<StoredEvent>(this.config?.tableName);
+    return this.database.knex<StoredEvent>(this.tableName);
   };
 
-  initialize(config: PostgresConnectionConfig): void {
-    this.config = config;
-
-    this._knex = Knex({
-      debug: true,
-      client: 'pg',
-      connection: {
-        host: config.databaseHost,
-        port: config.databasePort,
-        user: config.databaseUser,
-        password: config.databasePassword,
-        database: config.databaseName,
-      },
-      pool: {
-        afterCreate: (_conn: any, done: (...args: any[]) => any) => {
-          this.logger.info(
-            `The connection to Postgres database \"${config.databaseName}\" (table \"${config.tableName}\") is successfully established.`
-          );
-          done();
-        },
-      },
-      postProcessResponse: (result, _queryContext) => {
-        // convert to camelCase
-        function mapKeysToCamelCase(obj: Record<any, any>) {
-          const transformed: Record<any, any> = {};
-          Object.keys(obj).forEach((key) => (transformed[camelCase(key)] = obj[key]));
-          return transformed;
-        }
-        if (!result) return result;
-        if (Array.isArray(result)) return result.map((row) => mapKeysToCamelCase(row));
-        return mapKeysToCamelCase(result);
-      },
-      wrapIdentifier:
-        // convert to snake_case
-        (value: string, origImpl: (value: string) => string, queryContext: any): string =>
-          origImpl(decamelize(value)),
-    });
+  initialize(database: PostgresDatabase, tableName: string): void {
+    this.database = database;
+    this.tableName = tableName;
   }
 
   async getEventsStream(aggregateId: string, after?: number | undefined): Promise<StoredEvent[]> {
@@ -155,18 +116,23 @@ export class PostgresEventStore implements EventStore {
   }
 }
 
-export type PostgresEventStoreFactory = (config: PostgresConnectionConfig) => PostgresEventStore;
-export const postgresEventStoreFactory = (
-  context: interfaces.Context
-): PostgresEventStoreFactory => {
-  return (config: PostgresConnectionConfig) => {
+export const postgresEventStoreFactory = (context: interfaces.Context): EventStoreFactory => {
+  return (eventStoreTableName: string, database?: IDatabase) => {
+    if (!database) {
+      database = context.container.get(DATABASE);
+    }
+    if (!(database instanceof PostgresDatabase)) {
+      throw new Error(
+        'Cannot assign PostgresEventStoreFactory to unknown Database (not PostgresDatabase) in postgresEventStoreFactory.'
+      );
+    }
     const store = context.container.get(EVENT_STORE);
     if (!(store instanceof PostgresEventStore)) {
       throw new Error(
         'Cannot find appropriate binding for EVENT_STORE identifier. Probably, you"v binded it to a class that is not assignable to PostgresEventStore or have not binded it at all.'
       );
     }
-    store.initialize(config);
+    store.initialize(database, eventStoreTableName);
     return store;
   };
 };

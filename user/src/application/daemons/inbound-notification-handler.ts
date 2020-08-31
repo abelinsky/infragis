@@ -22,7 +22,7 @@ export class InboundNotificationHandler extends NotificationHandler {
   @OnNotification(AuthenticationEvents.EventNames.SignUpRequested)
   onSignUpRequested(event: StoredEvent<AuthenticationEvents.SignUpRequestedData>): void {
     this.logger.debug(
-      `InboundNotificationHandler: Received event from ${EventName.fromString(event.name)}` +
+      `InboundNotificationHandler: Received event from ${EventName.fromString(event.name)} ` +
         `with payload: ${JSON.stringify(event.data)}`
     );
   }

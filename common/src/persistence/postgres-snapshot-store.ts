@@ -1,75 +1,30 @@
 import { injectable, inject, interfaces } from 'inversify';
-import camelCase from 'camelcase';
-import decamelize from 'decamelize';
-import Knex from 'knex';
-import { SnapshotStore, StoredSnapshot } from '../event-sourcing';
+import { SnapshotStore, StoredSnapshot, SnapshotStoreFactory } from '../event-sourcing';
 import { Id } from '../types';
 import { ILogger } from '../utils';
-import { LOGGER_TYPE, SNAPSHOT_STORE } from '../dependency-injection';
-import { PostgresConnectionConfig } from './postgres-connection-config';
+import { LOGGER_TYPE, SNAPSHOT_STORE, DATABASE } from '../dependency-injection';
+import { IDatabase } from './database';
+import { PostgresDatabase } from './postgres-database';
 
 @injectable()
 export class PostgresSnapshotStore<T = any> implements SnapshotStore<T> {
   constructor(@inject(LOGGER_TYPE) protected logger: ILogger) {}
 
-  private config: PostgresConnectionConfig | undefined = undefined;
-  private _knex!: Knex;
-
-  private get knex() {
-    if (!this._knex) {
-      throw new Error(
-        `Knex is not initialized. Probably, initialize() was not called for ${this.constructor.name}`
-      );
-    }
-    return this._knex;
-  }
+  private database!: PostgresDatabase;
+  private tableName!: string;
 
   Snapshots = () => {
-    if (!this.knex) {
+    if (!this.database) {
       throw new Error(
-        `Knex is not initialized. Probably, initialize() was not called for ${this.constructor.name}`
+        `Database is not initialized. Probably, initialize() was not called for ${this.constructor.name}.`
       );
     }
-    return this.knex<StoredSnapshot>(this.config?.tableName);
+    return this.database.knex<StoredSnapshot>(this.tableName);
   };
 
-  initialize(config: PostgresConnectionConfig): void {
-    this.config = config;
-
-    this._knex = Knex({
-      debug: true,
-      client: 'pg',
-      connection: {
-        host: config.databaseHost,
-        port: config.databasePort,
-        user: config.databaseUser,
-        password: config.databasePassword,
-        database: config.databaseName,
-      },
-      pool: {
-        afterCreate: (_conn: any, done: (...args: any[]) => any) => {
-          this.logger.info(
-            `The connection to Postgres database \"${config.databaseName}\" (table \"${config.tableName}\") is successfully established.`
-          );
-          done();
-        },
-      },
-      postProcessResponse: (result, _queryContext) => {
-        // convert to camelCase
-        function mapKeysToCamelCase(obj: Record<any, any>) {
-          const transformed: Record<any, any> = {};
-          Object.keys(obj).forEach((key) => (transformed[camelCase(key)] = obj[key]));
-          return transformed;
-        }
-        if (!result) return result;
-        if (Array.isArray(result)) return result.map((row) => mapKeysToCamelCase(row));
-        return mapKeysToCamelCase(result);
-      },
-      wrapIdentifier:
-        // convert to snake_case
-        (value: string, origImpl: (value: string) => string, queryContext: any): string =>
-          origImpl(decamelize(value)),
-    });
+  initialize(database: PostgresDatabase, tableName: string): void {
+    this.database = database;
+    this.tableName = tableName;
   }
 
   async get(aggregateId: Id): Promise<StoredSnapshot<T> | undefined> {
@@ -86,21 +41,23 @@ export class PostgresSnapshotStore<T = any> implements SnapshotStore<T> {
   }
 }
 
-export type PostgresSnapshotStoreFactory = (
-  config: PostgresConnectionConfig
-) => PostgresSnapshotStore;
-
-export const postgresSnapshotStoreFactory = (
-  context: interfaces.Context
-): PostgresSnapshotStoreFactory => {
-  return (config: PostgresConnectionConfig) => {
+export const postgresSnapshotStoreFactory = (context: interfaces.Context): SnapshotStoreFactory => {
+  return (snapshotStoreFactory: string, database?: IDatabase) => {
+    if (!database) {
+      database = context.container.get(DATABASE);
+    }
+    if (!(database instanceof PostgresDatabase)) {
+      throw new Error(
+        'Cannot assign PostgresEventStoreFactory to unknown Database (not PostgresDatabase) in postgresEventStoreFactory.'
+      );
+    }
     const store = context.container.get(SNAPSHOT_STORE);
     if (!(store instanceof PostgresSnapshotStore)) {
       throw new Error(
         'Cannot find appropriate binding for SNAPSHOT_STORE identifier. Probably, you have binded it to a class that is not assignable to PostgresSnapshotStore or have not binded it at all.'
       );
     }
-    store.initialize(config);
+    store.initialize(database, snapshotStoreFactory);
     return store;
   };
 };

@@ -1,8 +1,12 @@
 FROM node:alpine
 
-WORKDIR /app
+
+WORKDIR /usr/src/app
 COPY package.json .
 RUN npm install --only=prod
 COPY . .
+COPY ./scripts/wait-for-it.sh /usr/src/app/wait-for-it.sh
 
-CMD ["npm", "start"]
+RUN apk add --no-cache bash
+
+# CMD ["npm", "start"]

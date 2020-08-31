@@ -9,6 +9,8 @@ import {
   KafkaNotificationConsumer,
 } from '../event-sourcing';
 import {
+  PostgresDatabase,
+  postgresDatabaseFactory,
   PostgresEventStore,
   postgresEventStoreFactory,
   PostgresSnapshotStore,
@@ -20,8 +22,6 @@ import { BaseLogger } from '../utils';
 import {
   DOMAIN_EVENTS_LISTENER,
   DOMAIN_EVENTS_PUBLISHER,
-  EVENT_STORE,
-  EVENT_STORE_FACTORY,
   GLOBAL_CONFIG,
   LOGGER_TYPE,
   NOTIFICATION_CONSUMER,
@@ -30,6 +30,10 @@ import {
   SECRETS_CONFIG,
   SNAPSHOT_STORE,
   SNAPSHOT_STORE_FACTORY,
+  DATABASE,
+  DATABASE_FACTORY,
+  EVENT_STORE,
+  EVENT_STORE_FACTORY,
 } from './constants';
 
 /**
@@ -162,6 +166,13 @@ export const persistence = new ContainerModule(
     _isBound: interfaces.IsBound,
     _rebind: interfaces.Rebind
   ) => {
+    // Provides PostgresDatabase as Singleton with `DATABASE`
+    // identifier.
+    bind(DATABASE).to(PostgresDatabase).inSingletonScope();
+
+    // Provides factory for PostgresDatabase.
+    bind(DATABASE_FACTORY).toFactory(postgresDatabaseFactory);
+
     // Provides PostgresEventStore for `EVENT_STORE` identifier in transient
     // scope to allow multiple event stores per service (for different kinds
     // of Aggregates).

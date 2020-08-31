@@ -16,3 +16,7 @@ export const SNAPSHOT_STORE_FACTORY = Symbol.for('__<Placeholder>SnapshotStoreFa
 // Rpc
 export const RPC_SERVER_FACTORY = Symbol.for('RPC_SERVER_FACTORY');
 export const RPC_CLIENT_FACTORY = Symbol.for('RPC_CLIENT_FACTORY');
+
+// Database
+export const DATABASE = Symbol.for('Database');
+export const DATABASE_FACTORY = Symbol.for('DatabaseFactory');
