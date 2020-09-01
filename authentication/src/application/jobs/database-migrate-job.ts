@@ -1,5 +1,8 @@
+import path from 'path';
 import { ApplicationJob, ILogger, Job, LOGGER_TYPE, DATABASE, IDatabase } from '@infragis/common';
 import { inject } from 'inversify';
+
+import name from 'module-alias';
 
 @ApplicationJob()
 export class DatabaseMigrateJob extends Job {
@@ -13,9 +16,16 @@ export class DatabaseMigrateJob extends Job {
   }
 
   async execute(): Promise<boolean> {
-    this.logger.info('Hello from DatabaseMigrateJob');
-    await this.database.migrate('migrate database');
-    await this.database.seed('seed database');
+    // Perform database migrations
+    await this.database.migrate(
+      path.join(__dirname, '../..', 'infrastructure/database/postgres/migrations')
+    );
+
+    // Perform database seed
+    await this.database.seed(
+      path.join(__dirname, '../..', 'infrastructure/database/postgres/seeds')
+    );
+
     return false;
   }
 }

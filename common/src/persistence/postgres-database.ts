@@ -6,7 +6,6 @@ import { IDatabase, DatabaseFactory } from './database';
 import { DatabaseConnectionCredentials } from './connection-credentials';
 import { DATABASE, LOGGER_TYPE } from '../dependency-injection';
 import { ILogger } from '../utils';
-import { v4 as uuidv4 } from 'uuid';
 
 @injectable()
 export class PostgresDatabase implements IDatabase {
@@ -31,7 +30,7 @@ export class PostgresDatabase implements IDatabase {
     this.connectionCredentials = credentials;
 
     this._knex = Knex({
-      debug: true,
+      // debug: true,
       client: 'pg',
       connection: {
         host: credentials.databaseHost,
@@ -42,8 +41,8 @@ export class PostgresDatabase implements IDatabase {
       },
       pool: {
         afterCreate: (_conn: any, done: (...args: any[]) => any) => {
-          this.logger.info(
-            `The connection to Postgres database \"${credentials.databaseName}\" is established.`
+          this.logger.success(
+            `√ The connection to Postgres database \"${credentials.databaseName}\" is established.`
           );
           done();
         },
@@ -67,24 +66,54 @@ export class PostgresDatabase implements IDatabase {
   }
 
   async migrate(directory: string): Promise<void> {
-    this.logger.info('Hello from PostgresDatabase#migrate');
+    this.logger.info('Performing database migrations ...');
+
+    try {
+      const [_batchNo, log] = await this.knex.migrate.latest({
+        directory,
+        extension: 'ts',
+      });
+
+      this.logger.success(
+        log?.length === 0 ? 'Already up to date' : `√ ${log.length} migration(s) done.`
+      );
+    } catch (error) {
+      this.logger.failure(error, '✗ Database migrations failed');
+    }
   }
 
   async seed(directory: string): Promise<void> {
-    this.logger.info('Hello from PostgresDatabase#seed');
+    this.logger.info('Seeding database ...');
+    try {
+      const [log] = await this.knex.seed.run({
+        directory,
+        extension: 'ts',
+      });
+
+      log?.length === 0
+        ? this.logger.info('No seed files found.')
+        : this.logger.success(`√ Ran ${log.length} seed files`);
+    } catch (error) {
+      this.logger.failure(error, '✗ Database seeding failed');
+    }
   }
 
   async closeConnection(): Promise<void> {
+    await this._knex?.destroy();
     this._knex = undefined;
   }
 }
 
+/**
+ * Returns factory for creating and initializing {@link PostgresDatabase} instance.
+ * @param context Inversify context.
+ */
 export const postgresDatabaseFactory = (context: interfaces.Context): DatabaseFactory => {
   return (connectionCredentials) => {
     const database = context.container.get(DATABASE);
     if (!(database instanceof PostgresDatabase)) {
       throw new Error(
-        'Cannot apply PostgresDatabaseFactory because DATABASE identifir is not binded for PostgresDatabase'
+        'Cannot apply PostgresDatabaseFactory because DATABASE identifier is not binded for PostgresDatabase'
       );
     }
     database.initialize(connectionCredentials);

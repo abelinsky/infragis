@@ -61,22 +61,20 @@ export abstract class ServiceServer {
     this.registerDaemons();
     await this.startDaemons();
 
-    this._logger.info(
-      `🚀  Server has been initialized ${
-        this.healthcheck() ? 'and is running' : 'but healthcheck failed'
-      }...`
-    );
+    this._logger.success('🚀  Server has been initialized');
+
+    this.healthcheck()
+      ? this._logger.success('Server health is ok')
+      : this._logger.failure('Server healthcheck failed');
   }
 
   private registerJobs(): void {
     const jobs = getJobCtrsFromMetadata();
     for (const ctr of jobs) {
       const name = ctr.name;
-
       if (this.container.isBoundNamed(JOB_TYPE, name)) {
         throw new Error(`Two jobs cannot have the same name: ${name}`);
       }
-
       this.container.bind(JOB_TYPE).to(ctr).whenTargetNamed(name);
     }
   }
@@ -85,11 +83,9 @@ export abstract class ServiceServer {
     const daemonCtrs = getDaemonsCtrsFromMetadata();
     for (const ctr of daemonCtrs) {
       const name = ctr.name;
-
       if (this.container.isBoundNamed(DAEMON_TYPE, name)) {
         throw new Error(`Two daemons cannot have the same name: ${name}`);
       }
-
       this.container.bind(DAEMON_TYPE).to(ctr).whenTargetNamed(name);
     }
   }
@@ -103,11 +99,11 @@ export abstract class ServiceServer {
 
     this._logger.info(`Performing ${jobs.length} job(s) execution...`);
     for (const job of jobs) {
-      this._logger.info(`   executing ${job.name} job...`);
+      this._logger.info(`Executing ${job.name} job...`);
       const result = await job.execute();
       result
-        ? this._logger.warn(`   failed to execute ${job.name}.`)
-        : this._logger.info(`   job ${job.name} successfully finished.`);
+        ? this._logger.failure(`✗ Failed to execute ${job.name}.`)
+        : this._logger.success(`√ Job ${job.name} successfully finished.`);
     }
   }
 
@@ -122,7 +118,7 @@ export abstract class ServiceServer {
       this._logger.info(`   starting daemon ${daemon.name}...`);
       await daemon.start();
     }
-    this._logger.info(
+    this._logger.success(
       `${this.applicationDaemons.length} daemons have been started successfully...`
     );
   }

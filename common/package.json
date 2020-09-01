@@ -1,6 +1,6 @@
 {
   "name": "@infragis/common",
-  "version": "0.1.17-7",
+  "version": "0.1.17-11",
   "description": "Common package of Infragis platform",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -27,6 +27,7 @@
     "async-retry": "^1.3.1",
     "camelcase": "^6.0.0",
     "chalk": "^4.1.0",
+    "colorette": "^1.2.1",
     "cookie-session": "^1.4.0",
     "decamelize": "^4.0.0",
     "dotenv": "^8.2.0",
