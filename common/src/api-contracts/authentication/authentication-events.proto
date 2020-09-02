@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package authentication;
 
-/* Events from Session Aggregate */
+/* Events from the Session Aggregate */
 message AuthenticationEvents { repeated AuthenticationEvent events = 1; }
 
 message AuthenticationEvent {
@@ -30,7 +30,7 @@ message SignUpRequested {
 
 message SignOut { string signedOutAt = 1; }
 
-/* Events from User Aggregate */
+/* Events from the User Aggregate */
 message UserEvents { repeated UserEvent events = 1; }
 
 message UserEvent {

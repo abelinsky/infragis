@@ -1,12 +1,12 @@
 import { User, UserRepository } from '@/domain';
-import { IN_MEMORY_USERS_STORE } from '@/infrastructure/constants';
 import {
-  InMemoryStore,
-  UserId,
-  EVENT_STORE_FACTORY,
+  AuthenticationQueryModel,
   EventStoreFactory,
-  SNAPSHOT_STORE_FACTORY,
   SnapshotStoreFactory,
+  PostgresDatabase,
+  EVENT_STORE_FACTORY,
+  SNAPSHOT_STORE_FACTORY,
+  DATABASE,
 } from '@infragis/common';
 import { inject, injectable } from 'inversify';
 
@@ -20,17 +20,16 @@ export class PostgresUserRepository implements UserRepository {
 
   private eventStore = this.eventStoreFactory('user_events');
   private snapshotStore = this.snapshotStoreFactory('user_snapshots');
+  private UserView = () => this.database.knex<AuthenticationQueryModel.UserView>('user_view');
 
   constructor(
+    @inject(DATABASE) private database: PostgresDatabase,
     @inject(EVENT_STORE_FACTORY) private eventStoreFactory: EventStoreFactory,
-    @inject(SNAPSHOT_STORE_FACTORY) private snapshotStoreFactory: SnapshotStoreFactory,
-    // TODO: Replace with PostgresStore
-    @inject(IN_MEMORY_USERS_STORE) private usersStore: InMemoryStore
+    @inject(SNAPSHOT_STORE_FACTORY) private snapshotStoreFactory: SnapshotStoreFactory
   ) {}
 
-  async getId(email: string): Promise<UserId> {
-    const document = this.usersStore.get(email);
-    return document ? UserId.fromString(document.id) : undefined;
+  async getByEmail(email: string): Promise<AuthenticationQueryModel.UserView | undefined> {
+    return await this.UserView().select().where({ email }).first();
   }
 
   async store(user: User): Promise<void> {

@@ -1,13 +1,13 @@
-import { StoredEvent } from '@infragis/common';
-import { User } from '..';
-import { UserId } from '@infragis/common';
+import { AuthenticationQueryModel } from '@infragis/common';
+import { User } from './user';
 
 export interface UserRepository {
   /**
-   * Gets Id for given email.
+   * Gets User view (see {@link AuthenticationQueryModel.UserView})
+   * by email.
    * @param email User's email.
    */
-  getId(email: string): Promise<UserId | undefined>;
+  getByEmail(email: string): Promise<AuthenticationQueryModel.UserView | undefined>;
 
   /**
    * Gets the stream of events for User class.

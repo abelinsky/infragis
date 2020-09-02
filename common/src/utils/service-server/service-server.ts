@@ -61,10 +61,10 @@ export abstract class ServiceServer {
     this.registerDaemons();
     await this.startDaemons();
 
-    this._logger.success('🚀  Server has been initialized');
+    this._logger.success('Server has been initialized');
 
     this.healthcheck()
-      ? this._logger.success('Server health is ok')
+      ? this._logger.success('🚀  Server is running')
       : this._logger.failure('Server healthcheck failed');
   }
 

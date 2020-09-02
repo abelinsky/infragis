@@ -23,5 +23,6 @@ export class UserNotificationMessage extends NotificationMessage {
   protofile = 'authentication-events.proto';
 }
 
-export * as AuthenticationCommands from './authentication-commands.contract';
+export * as AuthenticationCommands from './authentication-commands';
 export * as AuthenticationEvents from './authentication-events';
+export * as AuthenticationQueryModel from './authentication-query-model';

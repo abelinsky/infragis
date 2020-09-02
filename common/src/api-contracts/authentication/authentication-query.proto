@@ -1,0 +1,12 @@
+import "google/protobuf/empty.proto";
+
+syntax = "proto3";
+
+package authentication;
+
+message UserView {
+  string userId = 1;
+  string email = 2;
+  string createdAt = 3;
+  string sessionId = 4;
+}

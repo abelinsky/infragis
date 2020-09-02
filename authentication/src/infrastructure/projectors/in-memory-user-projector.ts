@@ -1,6 +1,7 @@
-import { inject, injectable, postConstruct } from 'inversify';
+import { inject, injectable } from 'inversify';
 import {
   AuthenticationEvents,
+  AuthenticationQueryModel,
   DomesticProjector,
   InMemoryEventStore,
   ProjectionHandler,
@@ -35,13 +36,14 @@ export class InMemoryUserProjector extends DomesticProjector {
   }
 
   @ProjectionHandler(AuthenticationEvents.EventNames.UserCreated)
-  async created({ aggregateId, data }: StoredEvent<AuthenticationEvents.UserCreatedData>) {
-    this.logger.info(`Received in InMemoryUserProjector: ${JSON.stringify(data)}`);
-
-    const userDocument = {
-      id: aggregateId,
+  async created(event: StoredEvent<AuthenticationEvents.UserCreatedData>) {
+    const userDocument: AuthenticationQueryModel.UserView = {
+      userId: event.aggregateId,
+      createdAt: event.data.createdAt,
+      email: event.data.email,
+      sessionId: undefined,
     };
 
-    this.usersStore.set(data.email, userDocument);
+    this.usersStore.set(event.data.email, userDocument);
   }
 }

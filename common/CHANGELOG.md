@@ -16,6 +16,7 @@ This version allows:
 ### Changed
 
 - Event and snapshot storage is set to Postgres by default
+- Projectors can now track (and persist in Postgres) their positions within topics
 
 ### Removed
 

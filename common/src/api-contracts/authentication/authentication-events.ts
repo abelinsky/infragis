@@ -10,6 +10,16 @@ export enum EventNames {
 }
 
 /**
+ * Session Aggregate events.
+ */
+export interface SignUpRequestedData {
+  sessionId: string;
+  userId: string;
+  email: string;
+  requestedAt: string;
+}
+
+/**
  * User Aggregate events.
  */
 export interface UserCreatedData {
@@ -21,14 +31,4 @@ export interface UserCreatedData {
    * It is not sent in the notifications to other services.
    */
   password?: string;
-}
-
-/**
- * Session Aggregate events.
- */
-export interface SignUpRequestedData {
-  sessionId: string;
-  userId: string;
-  email: string;
-  requestedAt: string;
 }

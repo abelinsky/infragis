@@ -1,24 +1,27 @@
 import { inject, injectable } from 'inversify';
 import {
   AuthenticationEvents,
+  AuthenticationQueryModel,
   ProjectionHandler,
   StoredEvent,
   PostgresDomesticProjector,
   PostgresDatabase,
   ILogger,
   EventStoreFactory,
+  EventName,
   DATABASE,
   LOGGER_TYPE,
   EVENT_STORE_FACTORY,
-  EventName,
 } from '@infragis/common';
-import { User } from '@/domain';
 
 @injectable()
 export class PostgresUserProjector extends PostgresDomesticProjector {
   groupId = 'user_projector';
 
-  private eventStore = this.eventStoreFactory('user_events');
+  private userEventStore = this.eventStoreFactory('user_events');
+  private sessionEventStore = this.eventStoreFactory('session_events');
+
+  private UserView = () => this.database.knex<AuthenticationQueryModel.UserView>('user_view');
 
   constructor(
     @inject(DATABASE) protected database: PostgresDatabase,
@@ -29,27 +32,31 @@ export class PostgresUserProjector extends PostgresDomesticProjector {
   }
 
   async getEvents(after: number, topic: string): Promise<StoredEvent[]> {
-    // we are listening only for one topic here, so we do not need switch/case for response.
-    // But it worth to check that the topic is right.
-    if (!this.getTopics().includes(topic)) {
+    switch (topic) {
+    // TODO: Replace with someting like Topics.AuthenticationUser
+    case EventName.fromString(AuthenticationEvents.EventNames.UserCreated).getTopic():
+      return await this.userEventStore.getAllEvents(after);
+    case EventName.fromString(AuthenticationEvents.EventNames.SignUpRequested).getTopic():
+      return await this.sessionEventStore.getAllEvents(after);
+    default:
       throw new Error(
-        `PostgresUserProjector is strangely requested about the topic \"${topic}\" while it is not interested in it.`
+        'PostgresUserProjector is strangely requested about the topic "${topic}" while it is not interested in it.'
       );
     }
-
-    return await this.eventStore.getAllEvents(after);
   }
 
   @ProjectionHandler(AuthenticationEvents.EventNames.UserCreated)
   async onUserCreated({ aggregateId, data }: StoredEvent<AuthenticationEvents.UserCreatedData>) {
-    this.logger.info(`Received in InMemoryUserProjector: ${JSON.stringify(data)}`);
+    await this.UserView().insert({
+      userId: aggregateId,
+      createdAt: data.createdAt,
+      email: data.email,
+      sessionId: undefined,
+    });
+  }
 
-    const userDocument = {
-      id: aggregateId,
-    };
-
-    this.logger.warn('TODO: Implement projection store in PostgresUserProjector');
-
-    //this.usersStore.set(data.email, userDocument);
+  @ProjectionHandler(AuthenticationEvents.EventNames.SignUpRequested)
+  async onSignUpRequested({ data }: StoredEvent<AuthenticationEvents.SignUpRequestedData>) {
+    await this.UserView().where({ userId: data.userId }).update({ sessionId: data.sessionId });
   }
 }

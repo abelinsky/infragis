@@ -24,11 +24,10 @@ export type ServiceMethod = Extract<AuthenticationCommands.ServiceType, typeof U
 
 @injectable()
 export class RequestEmailSignUp implements IUseCase<AuthenticationCommands.Service, ServiceMethod> {
-  @inject(LOGGER_TYPE) logger: ILogger;
-
   constructor(
     @inject(USER_REPOSITORY) private userRepository: UserRepository,
-    @inject(SESSION_REPOSITORY) private sessionRepository: SessionRepository
+    @inject(SESSION_REPOSITORY) private sessionRepository: SessionRepository,
+    @inject(LOGGER_TYPE) protected logger: ILogger
   ) {}
 
   execute = async (payload: AuthenticationCommands.RequestEmailSignUp): Promise<void> => {
@@ -37,11 +36,11 @@ export class RequestEmailSignUp implements IUseCase<AuthenticationCommands.Servi
     const requestedAt = Timestamp.now();
     const { email, password } = payload;
 
-    let userId = await this.userRepository.getId(email);
+    const userView = await this.userRepository.getByEmail(email);
+    const userId = userView ? UserId.fromString(userView.userId) : UserId.generate();
 
     // TODO: Move this to AuthenticationDomainService.authenticate()
-    if (!userId) {
-      userId = UserId.generate();
+    if (!userView) {
       const hashedPassword = await Password.fromString(password).hash();
       const user = User.create(userId, Email.fromString(email), hashedPassword, Timestamp.now());
       await this.userRepository.store(user);
@@ -51,8 +50,8 @@ export class RequestEmailSignUp implements IUseCase<AuthenticationCommands.Servi
     const session = Session.emailSignUp(sessionId, userId, Email.fromString(email), requestedAt);
     await this.sessionRepository.store(session);
 
-    this.logger.info('Use-case RequestEmailSignUp completed.');
-
     // TODO: Create tokens
+
+    this.logger.debug('Use-case RequestEmailSignUp completed.');
   };
 }
