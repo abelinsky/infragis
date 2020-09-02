@@ -11,6 +11,6 @@ export interface StoredEvent<T = Record<any, any>> {
   data: T;
   /** Timestamp when this stored event was created for persistence. */
   insertedAt: string;
-  /** Sequence number in the event stream that owned this event during saving. */
+  /** Global sequence number of the event. */
   sequence: number;
 }

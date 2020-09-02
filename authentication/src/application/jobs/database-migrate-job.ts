@@ -2,8 +2,6 @@ import path from 'path';
 import { ApplicationJob, ILogger, Job, LOGGER_TYPE, DATABASE, IDatabase } from '@infragis/common';
 import { inject } from 'inversify';
 
-import name from 'module-alias';
-
 @ApplicationJob()
 export class DatabaseMigrateJob extends Job {
   readonly name = 'database-migrate-job';

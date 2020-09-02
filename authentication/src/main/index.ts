@@ -20,7 +20,7 @@ import { EmailSignUp } from '@/application';
 import {
   PostgresSessionRepository,
   PostgresUserRepository,
-  InMemoryUserProjector,
+  PostgresUserProjector,
   DOMESTIC_USER_PROJECTOR,
   IN_MEMORY_USERS_STORE,
 } from '@/infrastructure';
@@ -38,7 +38,6 @@ DI.registerSingleton(SESSION_REPOSITORY, PostgresSessionRepository);
 DI.registerSingleton(USER_REPOSITORY, PostgresUserRepository);
 
 DI.registerIdentifiedProvider(EmailSignUp.USECASE_NAME, EmailSignUp.RequestEmailSignUp);
-DI.registerIdentifiedProvider(DOMESTIC_USER_PROJECTOR, InMemoryUserProjector);
-DI.registerSingleton(InMemoryUserProjector, InMemoryUserProjector);
+DI.registerIdentifiedProvider(DOMESTIC_USER_PROJECTOR, PostgresUserProjector);
 
 DI.bootstrap(AuthenticationServer);

@@ -56,7 +56,7 @@ export class PostgresEventStore implements EventStore {
   async getAllEvents(after: number): Promise<StoredEvent[]> {
     const result = await this.Events()
       .select()
-      .where('sequence', '>=', after)
+      .where('sequence', '>', after) // do not include event with sequence === `after`
       .orderBy('sequence', 'asc');
     return result;
   }
@@ -104,15 +104,13 @@ export class PostgresEventStore implements EventStore {
       .select('*')
       .where('aggregateId', aggregateId.toString())
       .orderBy('version')
-      .limit(1);
-
-    return result.length ? result[0] : undefined;
+      .first();
+    return result;
   }
 
   private async getOffset(): Promise<number> {
-    const result = await this.Events().select('*').orderBy('sequence', 'desc').limit(1);
-    if (!result.length) return 0;
-    return result[0].sequence;
+    const result = await this.Events().select().orderBy('sequence', 'desc').first();
+    return result?.sequence ?? 0;
   }
 }
 

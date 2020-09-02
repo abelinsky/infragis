@@ -21,11 +21,15 @@ export class PostgresDatabase implements IDatabase {
         'Knex in PostgresDatabase is not initialized. Probably, PostgresDatabase#initialize() was not called.'
       );
     }
+
+    // TODO: ensure connection ?
+    // await asyncRetry(() => this.xxx?.connect());
+
     return this._knex;
   }
 
   initialize(credentials: DatabaseConnectionCredentials) {
-    if (this._knex) return; // Already initialized in a Singleton scope, there is no need to re-initialize.
+    if (this._knex) return; // Already initialized in a Singleton scope, no need to re-initialize.
 
     this.connectionCredentials = credentials;
 

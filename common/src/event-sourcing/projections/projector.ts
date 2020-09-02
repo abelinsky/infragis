@@ -15,9 +15,9 @@ export interface IProjector {
   stop(): Promise<void>;
 
   /**
-   * Gets current position in the Events Stream
+   * Gets current track position in the Events Stream
    * that indicates the number of the events that
-   *  have been already processed and saved by the Projector.
+   * have been already processed by the Projector.
    */
   getPosition(): Promise<number>;
 
@@ -28,10 +28,10 @@ export interface IProjector {
   increasePosition(): Promise<void>;
 
   /**
-   * Gets the array of events from specified position.
+   * Gets the array of events after specified position (not including it).
    * @param from The position of the event from which to fetch the events.
    */
-  getEvents(from: number): Promise<StoredEvent[]>;
+  getEvents(after: number): Promise<StoredEvent[]>;
 
   /**
    * Applies event to the Projector. Calls event handler
@@ -67,6 +67,7 @@ export abstract class Projector implements IProjector {
       `);
       return false;
     }
+    // TODO: Need to implement it in a single transaction
     await this.handleEvent(event);
     await this.increasePosition();
     return true;

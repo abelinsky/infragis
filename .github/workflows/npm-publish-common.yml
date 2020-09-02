@@ -5,9 +5,9 @@ name: Publish Common Package on NPM
 
 on:
   push:
-    branches: 
+    branches:
       - develop
-    paths: 
+    paths:
       - 'common/**'
 
 jobs:
@@ -20,8 +20,8 @@ jobs:
           node-version: 12
       - run: cd common && npm install && npm run test
 
-        
   publish-npm:
+    if: ${{ false }} # skip this job for now
     needs: test
     runs-on: ubuntu-latest
     steps:
