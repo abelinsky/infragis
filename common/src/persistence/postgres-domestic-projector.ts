@@ -1,57 +1,58 @@
 import { injectable } from 'inversify';
-
 import { StoredEvent } from '../event-sourcing';
 import { DomesticProjector } from '../event-sourcing/projections/domestic-projector';
-
 import { PostgresDatabase } from './postgres-database';
+import { EventName } from '../types';
 
-interface SequencePositionCounter {
-  projectorName: string;
-  sequencePosition: number;
-  projectionTime: Date;
+interface OffsetCounter {
+  projectorGroupId: string;
+  topic: string;
+  offset: number;
+  projectionTime: string;
 }
 
 @injectable()
 export abstract class PostgresDomesticProjector extends DomesticProjector {
-  abstract database: PostgresDatabase;
-  abstract projectorName: string;
-  protected counterTableName = 'projection_counters';
+  protected abstract database: PostgresDatabase;
+  protected offsetTrackerTableName = 'projection_offsets';
 
-  abstract async getEvents(after: number): Promise<StoredEvent[]>;
+  protected Counter = () => this.database.knex<OffsetCounter>(this.offsetTrackerTableName);
 
-  protected Counter = () => this.database.knex<SequencePositionCounter>(this.counterTableName);
-
-  async getPosition(): Promise<number> {
-    await this.ensureSequenceCounterTable(this.counterTableName);
+  async getOffset(topic: string): Promise<number> {
+    await this._ensureSequenceCounterTable(this.offsetTrackerTableName, this.getTopics());
     const counter = await this.Counter()
       .select()
-      .where('projector_name', this.projectorName)
+      .where('projectorGroupId', this.groupId)
+      .andWhere({ topic })
       .first();
-    return counter?.sequencePosition ?? 0;
+    return counter?.offset ?? 0;
   }
 
-  async increasePosition(): Promise<void> {
-    const pos = await this.getPosition();
-    await this.Counter()
-      .where('projector_name', this.projectorName)
-      .update({
-        sequencePosition: pos + 1,
-      });
+  async setOffset(lastProjectedEvent: StoredEvent): Promise<void> {
+    const topic = EventName.fromString(lastProjectedEvent.name).getTopic();
+    await this.Counter().where('projectorGroupId', this.groupId).andWhere({ topic }).update({
+      offset: lastProjectedEvent.sequence,
+      projectionTime: new Date().toISOString(),
+    });
   }
 
-  private async ensureSequenceCounterTable(tableName: string): Promise<void> {
+  private async _ensureSequenceCounterTable(tableName: string, topics: string[]): Promise<void> {
     try {
       const exists = await this.database.knex.schema.hasTable(tableName);
-      !exists && (await this._createSequenceCounterTable(tableName));
-      const data = await this.database.knex.select('*').from(tableName);
-      !data.length &&
-        (await this.database.knex
+      if (!exists) await this._createSequenceCounterTable(tableName);
+
+      for (const topic of topics) {
+        const data = await this.database.knex.select('*').from(tableName).where({ topic });
+        if (data.length) continue;
+        await this.Counter()
           .insert({
-            projector_name: this.projectorName,
-            sequence_position: 0,
-            projection_time: new Date(),
+            topic,
+            projectorGroupId: this.groupId,
+            offset: 0,
+            projectionTime: new Date().toISOString(),
           })
-          .into(tableName));
+          .into(tableName);
+      }
     } catch (error) {
       this.logger.error(error, `Failed to create table ${tableName}`);
       throw error;
@@ -60,11 +61,13 @@ export abstract class PostgresDomesticProjector extends DomesticProjector {
 
   private async _createSequenceCounterTable(tableName: string): Promise<void> {
     const knex = this.database.knex;
-    await this.database.knex.schema.createTable(tableName, function (t) {
-      t.increments();
-      t.string('projector_name').unique();
-      t.integer('sequence_position');
-      t.dateTime('projection_time').defaultTo(knex.fn.now());
+    await this.database.knex.schema.createTable(tableName, function (table) {
+      table.increments().primary();
+      table.string('projector_group_id');
+      table.string('topic');
+      table.integer('offset');
+      table.dateTime('projection_time').defaultTo(knex.fn.now());
+      table.unique(['projector_group_id', 'topic']);
     });
   }
 }

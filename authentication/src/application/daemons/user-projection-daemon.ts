@@ -18,7 +18,6 @@ export class UserProjectionDaemon extends Daemon {
    */
   async start(): Promise<boolean> {
     this.userProjector.start();
-    this.logger.debug('Starting projecting user events into query model...');
     return true;
   }
 

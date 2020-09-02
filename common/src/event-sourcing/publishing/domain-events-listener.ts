@@ -9,7 +9,7 @@ import { EventName } from '../../types';
 import { DOMAIN_EVENTS_PUBLISHER } from '../../dependency-injection';
 
 export interface IDomainEventsListener {
-  getListener(aggregateType?: Class<Aggregate> | RegExp): Observable<StoredEvent>;
+  getListener(topics?: RegExp): Observable<StoredEvent>;
 }
 
 @injectable()
@@ -23,16 +23,11 @@ export class DomainEventsListener implements IDomainEventsListener {
     return this.eventPublisher;
   }
 
-  getListener(aggregateType?: Class<Aggregate> | RegExp): Observable<StoredEvent> {
-    let regExp: RegExp | undefined;
-    if (aggregateType && !(aggregateType instanceof RegExp)) {
-      regExp = new RegExp(aggregateType.name, 'i');
-    }
-
+  getListener(topics?: RegExp): Observable<StoredEvent> {
     return this.eventsSource.pipe(
       filter((event) => {
-        const aggregate = EventName.fromString(event.name).aggregate;
-        return regExp ? regExp.test(aggregate) : true;
+        const topic = EventName.fromString(event.name).getTopic();
+        return topics ? topics.test(topic) : true;
       })
     );
   }

@@ -6,7 +6,6 @@ import { Aggregate } from '../core';
 import { IDomainEventsListener } from '../publishing';
 import { Projector } from './projector';
 import { DOMAIN_EVENTS_LISTENER } from '../../dependency-injection';
-import { StoredEvent } from '../index';
 
 /**
  * An internal Projector that listens for domain events published internally
@@ -16,11 +15,6 @@ import { StoredEvent } from '../index';
  */
 @injectable()
 export abstract class DomesticProjector extends Projector {
-  abstract async getEvents(after: number): Promise<StoredEvent[]>;
-  /**
-   * If defined, the Projector will listen for events aggregates of this type.
-   */
-  abstract aggregateClass: Class<Aggregate> | undefined = undefined;
   private subscription: Unsubscribable | undefined = undefined;
   @inject(DOMAIN_EVENTS_LISTENER) protected domainEventListener!: IDomainEventsListener;
 
@@ -35,11 +29,18 @@ export abstract class DomesticProjector extends Projector {
 
   async start(): Promise<void> {
     await this.initialize();
+
     // Replays events at startup to get the actual state
     // of the projections
     await this.replay();
+
+    // Will listen to topics that the Projector is interested in due to the
+    // set of the @ProjectionHandler methods inside it
+    const topics = this.getTopics();
+    const regex = new RegExp(topics.join('|'), 'i');
+
     this.subscription = this.domainEventListener
-      .getListener(this.aggregateClass)
+      .getListener(regex)
       .pipe(concatMap((event) => from(this.apply(event))))
       .subscribe();
   }

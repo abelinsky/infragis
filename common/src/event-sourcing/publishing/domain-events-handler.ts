@@ -6,6 +6,8 @@ import { DomainEventClass, EVENT_NAME_METADATA, StoredEvent, Aggregate } from '.
 import { EventName } from '../../types';
 import { DOMAIN_EVENTS_LISTENER } from '../../dependency-injection';
 
+export const DOMAIN_EVENT_HANDLER_TOPICS = '__DOMAIN_EVENT_HANDLER_TOPICS__';
+
 @injectable()
 export abstract class DomainEventsHandler {
   @inject(DOMAIN_EVENTS_LISTENER)
@@ -17,10 +19,25 @@ export abstract class DomainEventsHandler {
    */
   abstract aggregateClass: Class<Aggregate> | undefined;
 
+  private getTopics(): string[] {
+    const topics: string[] = Reflect.getMetadata(DOMAIN_EVENT_HANDLER_TOPICS, this) || [];
+    if (!topics.length) {
+      throw new Error(
+        `Class ${this.constructor.name} does not have methods decorated with @OnDomainEvent, please implement them.`
+      );
+    }
+    return topics;
+  }
+
   @postConstruct()
   initialize() {
+    // Will listen to topics that the Handler is interested in due to the
+    // set of the @OnDomainEvent methods inside it
+    const topics = this.getTopics();
+    const regex = new RegExp(topics.join('|'), 'i');
+
     this.subscription = this.eventsListener
-      .getListener(this.aggregateClass)
+      .getListener(regex)
       .subscribe((e) => this.handleEvent(e));
   }
 
@@ -62,5 +79,12 @@ export const OnDomainEvent = (Event: DomainEventClass<any>): MethodDecorator => 
 
     // Save methodName. It is used in DomainEventListener to handle events.
     Reflect.defineMetadata(eventName.toString(), methodName, target);
+
+    // Remember topics that the Projector is listening to. This metadata is used
+    // in `getTopics` method of the Projector class.
+    const topic = eventName.getTopic();
+    const topics: string[] = Reflect.getMetadata(DOMAIN_EVENT_HANDLER_TOPICS, target) || [];
+    const newTopics = topics.includes(topic) ? topics : [...topics, topic];
+    Reflect.defineMetadata(DOMAIN_EVENT_HANDLER_TOPICS, newTopics, target);
   };
 };

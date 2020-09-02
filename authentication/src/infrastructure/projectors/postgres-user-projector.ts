@@ -10,29 +10,38 @@ import {
   DATABASE,
   LOGGER_TYPE,
   EVENT_STORE_FACTORY,
+  EventName,
 } from '@infragis/common';
 import { User } from '@/domain';
 
 @injectable()
 export class PostgresUserProjector extends PostgresDomesticProjector {
-  projectorName = 'postgres_user_projector';
-  aggregateClass = User;
+  groupId = 'user_projector';
 
   private eventStore = this.eventStoreFactory('user_events');
 
-  constructor(@inject(EVENT_STORE_FACTORY) private eventStoreFactory: EventStoreFactory) {
+  constructor(
+    @inject(DATABASE) protected database: PostgresDatabase,
+    @inject(EVENT_STORE_FACTORY) private eventStoreFactory: EventStoreFactory,
+    @inject(LOGGER_TYPE) logger: ILogger
+  ) {
     super();
   }
 
-  @inject(DATABASE) database: PostgresDatabase;
-  @inject(LOGGER_TYPE) logger: ILogger;
+  async getEvents(after: number, topic: string): Promise<StoredEvent[]> {
+    // we are listening only for one topic here, so we do not need switch/case for response.
+    // But it worth to check that the topic is right.
+    if (!this.getTopics().includes(topic)) {
+      throw new Error(
+        `PostgresUserProjector is strangely requested about the topic \"${topic}\" while it is not interested in it.`
+      );
+    }
 
-  async getEvents(after: number): Promise<StoredEvent[]> {
     return await this.eventStore.getAllEvents(after);
   }
 
   @ProjectionHandler(AuthenticationEvents.EventNames.UserCreated)
-  async created({ aggregateId, data }: StoredEvent<AuthenticationEvents.UserCreatedData>) {
+  async onUserCreated({ aggregateId, data }: StoredEvent<AuthenticationEvents.UserCreatedData>) {
     this.logger.info(`Received in InMemoryUserProjector: ${JSON.stringify(data)}`);
 
     const userDocument = {

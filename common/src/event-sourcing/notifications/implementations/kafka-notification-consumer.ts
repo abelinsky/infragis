@@ -85,10 +85,10 @@ export class KafkaNotificationConsumer implements INotificationConsumer {
        */
       await this.kafkaConsumer!.subscribe({ topic, fromBeginning: false });
 
-      const groupDescription = await this.kafkaConsumer!.describeGroup();
       this.logger.debug(`Kafka consumer group ${consumerGroup} has subscribed to ${topic} topic.`);
 
       await this.kafkaConsumer!.run({
+        // TODO: Research processing messages in `eachBatch` instead to resolveOffset() to mark a message in the batch as processed. See https://kafka.js.org/docs/consuming
         eachMessage: async ({ message }) => {
           try {
             const eventHeader = message.headers && message.headers[EVENT_HEADER];

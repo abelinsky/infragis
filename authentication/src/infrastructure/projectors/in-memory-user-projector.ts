@@ -1,7 +1,5 @@
 import { inject, injectable, postConstruct } from 'inversify';
-import { Class } from 'utility-types';
 import {
-  Aggregate,
   AuthenticationEvents,
   DomesticProjector,
   InMemoryEventStore,
@@ -9,25 +7,27 @@ import {
   StoredEvent,
   InMemoryStore,
 } from '@infragis/common';
-import { User } from '@/domain';
 import { IN_MEMORY_USERS_STORE } from '../constants';
 
+/**
+ * Helper implementation for test purposes.
+ */
 @injectable()
 export class InMemoryUserProjector extends DomesticProjector {
-  aggregateClass: Class<Aggregate> | undefined = User;
+  groupId = 'in_memory_user_projector';
 
   @inject(InMemoryEventStore) private eventStore: InMemoryEventStore;
   @inject(IN_MEMORY_USERS_STORE) usersStore: InMemoryStore;
 
-  private position = 0;
+  private offset = 0;
   protected projection: Record<any, any> = {};
 
-  async getPosition(): Promise<number> {
-    return this.position;
+  async getOffset(_topic: string): Promise<number> {
+    return this.offset;
   }
 
-  async increasePosition(): Promise<void> {
-    this.position++;
+  async setOffset(lastProjectedEvent: StoredEvent<Record<any, any>>): Promise<void> {
+    this.offset++;
   }
 
   getEvents(from: number): Promise<StoredEvent[]> {

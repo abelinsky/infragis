@@ -2,15 +2,16 @@ import { ILogger } from '../../utils';
 import { StoredEvent } from '../core/stored-event';
 import { injectable, inject } from 'inversify';
 import { LOGGER_TYPE } from '../../dependency-injection';
+import { EventName } from '../../types';
 
 export interface IProjector {
   /**
-   * Starts listening and processing events.
+   * Starts listening and handling events.
    */
   start(): Promise<void>;
 
   /**
-   * Stops listening and processing events.
+   * Stops listening and handling events.
    */
   stop(): Promise<void>;
 
@@ -18,20 +19,28 @@ export interface IProjector {
    * Gets current track position in the Events Stream
    * that indicates the number of the events that
    * have been already processed by the Projector.
+   * Note that a particular Projector can have many
+   * topics that it is interested in. Therefore it is
+   * necessary to track offsets independently by topic.
+   * @param topic Topic name from {@link EventName}.
+   * @note
    */
-  getPosition(): Promise<number>;
+  getOffset(topic: string): Promise<number>;
 
   /**
-   * Increases the position of the Projector in the
-   * Events Stream.
+   * Sets the offset to the last processed event.
+   * @param lastProjectedEvent Event that was already processed by this projector.
    */
-  increasePosition(): Promise<void>;
+  setOffset(lastProjectedEvent: StoredEvent): Promise<void>;
 
   /**
-   * Gets the array of events after specified position (not including it).
-   * @param from The position of the event from which to fetch the events.
+   * Gets the array of events after specified position/offset/sequence number
+   * (not including it) that the projector is interested in.
+   * @param after The position of the event after which to fetch the events.
+   * @param topic Topic to fetch events from.
+   *
    */
-  getEvents(after: number): Promise<StoredEvent[]>;
+  getEvents(after: number, topic: string): Promise<StoredEvent[]>;
 
   /**
    * Applies event to the Projector. Calls event handler
@@ -46,40 +55,114 @@ export interface IProjector {
    * the events stream.
    */
   replay(): Promise<void>;
+
+  /**
+   * Gets an array of topics that the Projector is listening to.
+   */
+  getTopics(): string[];
 }
 
+export const PROJECTOR_HANDLER_TOPICS = '__PROJECTOR_HANDLER_TOPICS__';
+
+/**
+ * Base class for the Projectors that are responsible for handling domain events
+ * (occured inside the service) and/or notifications (received through MessageQueue)
+ * and projecting those events into some state that corresponds to the moment in time
+ * when this domain event/notification occurred.
+ *
+ * @example
+ *
+ *
+ *     @injectable()
+ *     export class PostgresUserProjector extends PostgresDomesticProjector {
+ *       groupId = 'user_projector';
+ *       private eventStore = this.eventStoreFactory('user_events');
+ *       private sessionEventStore = this.eventStoreFactory('session_events');
+ *
+ *       ...
+ *
+ *       async getEvents(after: number, topic: string): Promise<StoredEvent[]> {
+ *         switch (topic) {
+ *           case EventName.fromString(AuthenticationEvents.EventNames.UserCreated).getTopic():
+ *             return await this.eventStore.getAllEvents(after);
+ *           case EventName.fromString(AuthenticationEvents.EventNames.SignUpRequested).getTopic():
+ *             return await this.sessionEventStore.getAllEvents(after);
+ *           default:
+ *             throw new Error(
+ *               `PostgresUserProjector is requested about the topic \"${topic}\" while it is not interested in it.`
+ *             );
+ *         }
+ *       }
+ *
+ *       @ProjectionHandler(AuthenticationEvents.EventNames.UserCreated)
+ *       async onUserCreated({ aggregateId, data }: StoredEvent<AuthenticationEvents.UserCreatedData>) {
+ *         ...
+ *       }
+ *
+ *       @ProjectionHandler(AuthenticationEvents.EventNames.SignUpRequested)
+ *       async onSessionCreated({aggregateId, data}: StoredEvent<AuthenticationEvents.SignUpRequestedData>) {
+ *         ...
+ *       }
+ *     }
+ */
 @injectable()
 export abstract class Projector implements IProjector {
-  @inject(LOGGER_TYPE) logger!: ILogger;
+  /**
+   * Projector groups allow a group of the same projectors to coordinate access
+   * to a list of topics. Projector groups must have unique group ids
+   * within the service. @param `groupId` is used to track the offset
+   * position of the events stream within the topic
+   * (that is set by {@link EventName}).
+   */
+  // TODO: check uniqueness
+  abstract readonly groupId: string;
 
   abstract async start(): Promise<void>;
   abstract async stop(): Promise<void>;
-  abstract async getPosition(): Promise<number>;
-  abstract async increasePosition(): Promise<void>;
-  abstract async getEvents(from: number): Promise<StoredEvent[]>;
+  abstract async getOffset(topic: string): Promise<number>;
+  abstract async setOffset(lastProjectedEvent: StoredEvent): Promise<void>;
+  abstract async getEvents(after: number, topic: string): Promise<StoredEvent[]>;
+
+  @inject(LOGGER_TYPE) logger!: ILogger;
+
+  getTopics(): string[] {
+    const topics: string[] = Reflect.getMetadata(PROJECTOR_HANDLER_TOPICS, this) || [];
+    if (!topics.length) {
+      throw new Error(
+        `Class ${this.constructor.name} does not have methods decorated with @ProjectionHandler, please implement them.`
+      );
+    }
+    return topics;
+  }
 
   apply = async (event: StoredEvent): Promise<boolean> => {
-    const currentPosition = await this.getPosition();
+    const topic = EventName.fromString(event.name).getTopic();
+    const currentPosition = await this.getOffset(topic);
     if (event.sequence !== currentPosition + 1) {
-      this.logger.warn(`Can't apply event ${event.eventId} with 
+      this.logger.warn(`Can not apply event ${event.eventId} with 
       sequence number ${event.sequence} to projector position 
       number ${currentPosition}
       `);
       return false;
     }
-    // TODO: Need to implement it in a single transaction
+    // TODO: Need to implement it in a single transaction:
+    // handleEvent changes ViewState in DB, increasePosition changes event number
     await this.handleEvent(event);
-    await this.increasePosition();
+    await this.setOffset(event);
     return true;
   };
 
   async replay(): Promise<void> {
-    const currentPosition = await this.getPosition();
-    const events = await this.getEvents(currentPosition);
-    if (!events) return;
+    const topics = this.getTopics();
 
-    for (const e of events) {
-      await this.apply(e);
+    for (const topic of topics) {
+      const currentPosition = await this.getOffset(topic);
+      const events = await this.getEvents(currentPosition, topic);
+      if (!events.length) continue;
+
+      for (const e of events) {
+        await this.apply(e);
+      }
     }
   }
 
@@ -103,25 +186,3 @@ export abstract class Projector implements IProjector {
     }
   }
 }
-
-/**
- * Decorator to be used in the descendants of the Projector class
- * to define a handler for the given event.
- */
-export const ProjectionHandler = (eventName: string): MethodDecorator => {
-  return function ProjectionDecorator(
-    target: any,
-    methodName: string | symbol,
-    _descriptor: PropertyDescriptor
-  ) {
-    if (!(target instanceof Projector)) {
-      throw new Error(
-        '@ProjectionDecorator can be used only inside Projector class descendants.' +
-          `But ${target} does not extend Projector class.`
-      );
-    }
-    // This metadata is used in `handleEvent` method of
-    // the Projector class.
-    Reflect.defineMetadata(eventName, methodName, target);
-  };
-};
