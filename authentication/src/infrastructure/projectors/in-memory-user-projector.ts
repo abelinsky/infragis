@@ -7,6 +7,7 @@ import {
   ProjectionHandler,
   StoredEvent,
   InMemoryStore,
+  ITransactionable,
 } from '@infragis/common';
 import { IN_MEMORY_USERS_STORE } from '../constants';
 
@@ -22,6 +23,18 @@ export class InMemoryUserProjector extends DomesticProjector {
 
   private offset = 0;
   protected projection: Record<any, any> = {};
+
+  protected get transactionProvider(): ITransactionable {
+    const stub: ITransactionable = {
+      transaction: async (runner: () => Promise<any>): Promise<any> => Promise.resolve(),
+      /* eslint-disable @typescript-eslint/no-empty-function */
+      beginTransaction: async (): Promise<void> => {},
+      rollbackTransaction: async (): Promise<void> => {},
+      commitTransaction: async (): Promise<void> => {},
+      /* eslint-enable @typescript-eslint/no-empty-function */
+    };
+    return stub;
+  }
 
   async getOffset(_topic: string): Promise<number> {
     return this.offset;

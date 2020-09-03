@@ -7,11 +7,14 @@ All notable changes to this project are documented in this file.
 This version allows:
 
 - To persist events and snapshots to PostgreSQL
+- To track and project events into Query Models views
+- To persist Query-Models' views in Postgres
 
 ### Added
 
 - new `persistence` module with PostgresEventStore, PostgresSnapshotStore
 - `dependency-injection` module: default bindings
+- classes for projecting events into Query-Models' views and persisting them
 
 ### Changed
 

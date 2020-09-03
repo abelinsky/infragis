@@ -1,3 +1,4 @@
+import assert from 'assert';
 import { injectable, inject, interfaces } from 'inversify';
 import camelCase from 'camelcase';
 import decamelize from 'decamelize';
@@ -6,12 +7,18 @@ import { IDatabase, DatabaseFactory } from './database';
 import { DatabaseConnectionCredentials } from './connection-credentials';
 import { DATABASE, LOGGER_TYPE } from '../dependency-injection';
 import { ILogger } from '../utils';
+import { TransactionException } from './transaction-exception';
 
 @injectable()
 export class PostgresDatabase implements IDatabase {
   private connectionCredentials: DatabaseConnectionCredentials | undefined = undefined;
 
   private _knex: Knex | undefined = undefined;
+
+  /**
+   * Current running transaction that is started by {@link PostgresDatabase#beginTransaction} method.
+   */
+  private _transaction: Knex.Transaction | undefined = undefined;
 
   constructor(@inject(LOGGER_TYPE) private logger: ILogger) {}
 
@@ -21,11 +28,7 @@ export class PostgresDatabase implements IDatabase {
         'Knex in PostgresDatabase is not initialized. Probably, PostgresDatabase#initialize() was not called.'
       );
     }
-
-    // TODO: ensure connection ?
-    // await asyncRetry(() => this.xxx?.connect());
-
-    return this._knex;
+    return this._transaction ?? this._knex;
   }
 
   initialize(credentials: DatabaseConnectionCredentials) {
@@ -34,7 +37,7 @@ export class PostgresDatabase implements IDatabase {
     this.connectionCredentials = credentials;
 
     this._knex = Knex({
-      // debug: true,
+      debug: true,
       client: 'pg',
       connection: {
         host: credentials.databaseHost,
@@ -44,6 +47,8 @@ export class PostgresDatabase implements IDatabase {
         database: credentials.databaseName,
       },
       pool: {
+        min: 2,
+        max: 10,
         afterCreate: (_conn: any, done: (...args: any[]) => any) => {
           this.logger.success(
             `√ The connection to Postgres database \"${credentials.databaseName}\" is established.`
@@ -102,7 +107,85 @@ export class PostgresDatabase implements IDatabase {
     }
   }
 
+  async beginTransaction(): Promise<void> {
+    this.logger.debug('Beginning transaction');
+
+    assert(
+      !this._transaction,
+      'A new transaction could not be started while another transaction is being executed.'
+    );
+    assert(
+      this._knex,
+      'Knex in PostgresDatabase is not initialized. Probably, PostgresDatabase#initialize() was not called.'
+    );
+
+    // const trxProvider = this._knex.transactionProvider();
+    // this._transaction = await trxProvider();
+    this._transaction = await this._knex.transaction();
+
+    this.logger.debug('Began!');
+  }
+
+  async commitTransaction(): Promise<void> {
+    this.logger.debug('Comitting transaction');
+
+    assert(
+      this._transaction,
+      'An error occurred in commitTransaction() method: `transaction` is undefined '
+    );
+    await this._transaction.commit();
+    this._transaction = undefined;
+
+    this.logger.debug('Comitted!');
+  }
+
+  async rollbackTransaction(): Promise<void> {
+    this.logger.debug('Rolling back.');
+
+    assert(
+      this._transaction,
+      'An error occurred in rollbackTransaction(): `transaction` is undefined '
+    );
+    if (this._transaction.isCompleted()) {
+      this.logger.warn(
+        'The request to rollback the transaction is rejected because the transaction has already been completed.'
+      );
+    } else {
+      await this._transaction.rollback();
+      this.logger.warn('Transaction rollback finished ');
+    }
+    this._transaction = undefined;
+
+    this.logger.debug('Rolled back!');
+  }
+
+  async transaction<T>(runner: () => Promise<T>): Promise<T> {
+    // Begin transaction
+    await this.beginTransaction();
+
+    // Execute runner within a try / catch block
+    try {
+      this.logger.debug('Starting runner');
+      const result = await runner();
+      this.logger.debug('Ran!');
+      await this.commitTransaction();
+      return result;
+    } catch (error) {
+      this.logger.error(error, 'Failed to execute database transaction');
+      // If any exception occurred, rollback the transaction
+      // so that none of the changes are persisted to the database.
+      await this.rollbackTransaction();
+      // Throw the exception so it can be handled in the downstream.
+      throw new TransactionException(error);
+    }
+  }
+
   async closeConnection(): Promise<void> {
+    // Commit transaction if any
+    if (this._transaction) {
+      await this.commitTransaction();
+    }
+    // Release connection
     await this._knex?.destroy();
     this._knex = undefined;
   }

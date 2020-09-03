@@ -21,7 +21,7 @@ export class BaseLogger implements ILogger {
   }
 
   error(err: string | Error, errorTitle?: string): void {
-    console.error(this.chalk.red.bold(`Error: ${err.toString()}`));
+    console.error(this.chalk.red.bold(`${errorTitle}: ${err.toString()}`));
   }
 
   info(...text: string[]): void {

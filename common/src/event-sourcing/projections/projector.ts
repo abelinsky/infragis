@@ -3,6 +3,7 @@ import { StoredEvent } from '../core/stored-event';
 import { injectable, inject } from 'inversify';
 import { LOGGER_TYPE } from '../../dependency-injection';
 import { EventName } from '../../types';
+import { ITransactionable } from '../../persistence/transactionable';
 
 export interface IProjector {
   /**
@@ -123,6 +124,8 @@ export abstract class Projector implements IProjector {
   abstract async setOffset(lastProjectedEvent: StoredEvent): Promise<void>;
   abstract async getEvents(after: number, topic: string): Promise<StoredEvent[]>;
 
+  protected abstract get transactionProvider(): ITransactionable;
+
   @inject(LOGGER_TYPE) logger!: ILogger;
 
   getTopics(): string[] {
@@ -145,10 +148,12 @@ export abstract class Projector implements IProjector {
       `);
       return false;
     }
-    // TODO: Need to implement it in a single transaction:
-    // handleEvent changes ViewState in DB, increasePosition changes event number
-    await this.handleEvent(event);
-    await this.setOffset(event);
+
+    // Run event processing in a transaction
+    await this.transactionProvider.transaction(() =>
+      Promise.all([this.handleEvent(event), this.setOffset(event)])
+    );
+
     return true;
   };
 
@@ -175,13 +180,13 @@ export abstract class Projector implements IProjector {
     // See ProjectionHandler
     const handlerName = Reflect.getMetadata(event.name, this);
     if (!handlerName) return;
-
     try {
-      this.logger.debug(`Trying to handle event ${event.name}...`);
       await (this as any)[handlerName](event);
     } catch (err) {
-      this.logger.error(`Error occured in Projector while processing event id=${event.eventId}`);
-      this.logger.error(err);
+      this.logger.error(
+        err,
+        `Error occured in Projector while processing event id=${event.eventId}`
+      );
       throw err;
     }
   }

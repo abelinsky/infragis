@@ -39,7 +39,7 @@ export class User extends Aggregate<SerializedUser> {
     this.createdAt = Timestamp.fromString(data.createdAt);
   }
 
-  static buildFrom(events: StoredEvent[], snapshot: StoredSnapshot<SerializedUser>): User {
+  static buildFrom(events: StoredEvent[], snapshot?: StoredSnapshot<SerializedUser>): User {
     const user = new User();
     if (snapshot) {
       user.applySnapshot(snapshot, events);

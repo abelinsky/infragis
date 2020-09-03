@@ -48,7 +48,7 @@ export class PostgresEventStore implements EventStore {
     const result = await this.Events()
       .select()
       .where('aggregateId', aggregateId)
-      .andWhere('version', '>=', after ? after : 0)
+      .andWhere('version', '>', after ? after : 0)
       .orderBy('sequence', 'asc');
     return result;
   }

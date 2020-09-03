@@ -5,3 +5,4 @@ export * from './postgres-event-store';
 export * from './postgres-snapshot-store';
 export * from './in-memory-store';
 export * from './postgres-domestic-projector';
+export * from './transactionable';

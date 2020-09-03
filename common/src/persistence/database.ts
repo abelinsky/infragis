@@ -1,9 +1,10 @@
+import { ITransactionable } from './transactionable';
 import { DatabaseConnectionCredentials } from './connection-credentials';
 
 /**
  * Base interface for working with service's database.
  */
-export interface IDatabase {
+export interface IDatabase extends ITransactionable {
   /**
    * Initializes database.
    * @param credentials Database connection credentials.
