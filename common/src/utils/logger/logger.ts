@@ -17,7 +17,7 @@ export class BaseLogger implements ILogger {
 
   debug(...text: string[]): void {
     const msg = text.join('\r\n');
-    console.log(this.chalk.cyanBright(`${msg}`));
+    console.log(this.chalk.yellow.bold(`${msg}`));
   }
 
   error(err: string | Error, errorTitle?: string): void {

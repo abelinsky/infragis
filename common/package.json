@@ -1,11 +1,12 @@
 {
   "name": "@infragis/common",
-  "version": "0.1.17-44",
+  "version": "0.1.17-58",
   "description": "Common package of Infragis platform",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "src/**/*"
   ],
   "scripts": {
     "clean": "del ./dist/*",
@@ -42,6 +43,7 @@
     "protobufjs": "^6.10.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.6.2",
+    "rxjs-for-await": "0.0.2",
     "sanitize-html": "^1.27.3",
     "shortid": "^2.2.15",
     "utility-types": "^3.10.0",

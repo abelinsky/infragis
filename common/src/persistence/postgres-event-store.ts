@@ -64,8 +64,13 @@ export class PostgresEventStore implements EventStore {
   async storeEvents(events: EventsStream, expectedVersion: number): Promise<void> {
     if (!events.toArray().length) return;
 
+    this.logger.debug('$tr$pre PostgresEventStore this.getLastEvent ' + events.aggregateId);
+
     // Check for the Optimistic concurrency control issues.
     const lastEvent = await this.getLastEvent(events.aggregateId);
+
+    this.logger.debug('$tr$post PostgresEventStore this.getLastEvent ' + events.aggregateId);
+
     if (lastEvent && lastEvent.version !== expectedVersion) {
       throw new OptimisticConcurrencyException(
         lastEvent.name,
@@ -76,10 +81,14 @@ export class PostgresEventStore implements EventStore {
       );
     }
 
+    this.logger.debug(
+      '$tr$pre PostgresEventStore let offset = await this.getOffset();' + events.aggregateId
+    );
+
     // Create StoredEvent list
-    let currentSequence = await this.getOffset();
+    let offset = await this.getOffset();
     const inserts = events.toArray().map((e) => {
-      currentSequence++;
+      offset++;
       const storedEvent: StoredEvent = {
         eventId: EventId.generate().toString(),
         aggregateId: events.aggregateId.toString(),
@@ -87,16 +96,37 @@ export class PostgresEventStore implements EventStore {
         name: Reflect.getMetadata(EVENT_NAME_METADATA, e.event),
         data: e.event.serialize(),
         insertedAt: Timestamp.now().toString(),
-        sequence: currentSequence,
+        sequence: offset,
       };
       return storedEvent;
     });
 
+    this.logger.debug(
+      '$tr$post PostgresEventStore let offset = await this.getOffset();' + events.aggregateId
+    );
+
+    this.logger.debug(
+      '$tr$pre PostgresEventStore await this.Events().insert(inserts);' + events.aggregateId
+    );
+
     // Persist `inserts`
     await this.Events().insert(inserts);
 
+    this.logger.debug(
+      '$tr$post PostgresEventStore await this.Events().insert(inserts);' + events.aggregateId
+    );
+
+    this.logger.debug(
+      '$tr$pre PostgresEventStore this.domainEventsPublisher.publish(inserts);' + events.aggregateId
+    );
+
     // Publish domain events events
     this.domainEventsPublisher.publish(inserts);
+
+    this.logger.debug(
+      '$tr$post PostgresEventStore this.domainEventsPublisher.publish(inserts);' +
+        events.aggregateId
+    );
   }
 
   private async getLastEvent(aggregateId: Id): Promise<StoredEvent | undefined> {

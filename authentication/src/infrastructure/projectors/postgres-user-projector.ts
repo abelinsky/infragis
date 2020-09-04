@@ -33,15 +33,15 @@ export class PostgresUserProjector extends PostgresDomesticProjector {
 
   async getEvents(after: number, topic: string): Promise<StoredEvent[]> {
     switch (topic) {
-      // TODO: Replace with someting like Topics.AuthenticationUser
-      case EventName.fromString(AuthenticationEvents.EventNames.UserCreated).getTopic():
-        return await this.userEventStore.getAllEvents(after);
-      case EventName.fromString(AuthenticationEvents.EventNames.SignUpRequested).getTopic():
-        return await this.sessionEventStore.getAllEvents(after);
-      default:
-        throw new Error(
-          'PostgresUserProjector is strangely requested about the topic "${topic}" while it is not interested in it.'
-        );
+    // TODO: Replace with someting like Topics.AuthenticationUser
+    case EventName.fromString(AuthenticationEvents.EventNames.UserCreated).getTopic():
+      return await this.userEventStore.getAllEvents(after);
+    case EventName.fromString(AuthenticationEvents.EventNames.SignUpRequested).getTopic():
+      return await this.sessionEventStore.getAllEvents(after);
+    default:
+      throw new Error(
+        'PostgresUserProjector is strangely requested about the topic "${topic}" while it is not interested in it.'
+      );
     }
   }
 

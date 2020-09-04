@@ -23,13 +23,25 @@ export abstract class PostgresDomesticProjector extends DomesticProjector {
 
   private Counter = () => this.database.knex<OffsetCounter>(this.offsetTrackerTableName);
 
-  async getOffset(topic: string): Promise<number> {
+  async initialize(): Promise<void> {
     await this._ensureOffsetCounterTable(this.offsetTrackerTableName, this.getTopics());
+  }
+
+  async getOffset(topic: string): Promise<number> {
+    this.logger.debug(
+      '$tr$pre PostgresDomesticProjector#getOffset  const counter = await this.Counter()'
+    );
+
     const counter = await this.Counter()
       .select()
       .where('projectorGroupId', this.groupId)
       .andWhere({ topic })
       .first();
+
+    this.logger.debug(
+      '$tr$post PostgresDomesticProjector#getOffset  const counter = await this.Counter()'
+    );
+
     return counter?.offset ?? 0;
   }
 
@@ -45,9 +57,10 @@ export abstract class PostgresDomesticProjector extends DomesticProjector {
     try {
       const exists = await this.database.knex.schema.hasTable(tableName);
       if (!exists) await this._createOffsetCounterTable(tableName);
-
       for (const topic of topics) {
-        const data = await this.Counter().select('*').where({ topic });
+        const data = await this.Counter()
+          .select('*')
+          .where({ topic, projectorGroupId: this.groupId });
         if (data.length) continue;
         await this.Counter()
           .insert({

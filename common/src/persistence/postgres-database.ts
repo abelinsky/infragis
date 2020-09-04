@@ -13,7 +13,7 @@ import { TransactionException } from './transaction-exception';
 export class PostgresDatabase implements IDatabase {
   private connectionCredentials: DatabaseConnectionCredentials | undefined = undefined;
 
-  private _knex: Knex | undefined = undefined;
+  private $knex: Knex | undefined = undefined;
 
   /**
    * Current running transaction that is started by {@link PostgresDatabase#beginTransaction} method.
@@ -23,20 +23,20 @@ export class PostgresDatabase implements IDatabase {
   constructor(@inject(LOGGER_TYPE) private logger: ILogger) {}
 
   get knex() {
-    if (!this._knex) {
+    if (!this.$knex) {
       throw new Error(
         'Knex in PostgresDatabase is not initialized. Probably, PostgresDatabase#initialize() was not called.'
       );
     }
-    return this._transaction ?? this._knex;
+    return this._transaction ?? this.$knex;
   }
 
   initialize(credentials: DatabaseConnectionCredentials) {
-    if (this._knex) return; // Already initialized in a Singleton scope, no need to re-initialize.
+    if (this.$knex) return; // Already initialized in a Singleton scope, no need to re-initialize.
 
     this.connectionCredentials = credentials;
 
-    this._knex = Knex({
+    this.$knex = Knex({
       debug: true,
       client: 'pg',
       connection: {
@@ -115,13 +115,13 @@ export class PostgresDatabase implements IDatabase {
       'A new transaction could not be started while another transaction is being executed.'
     );
     assert(
-      this._knex,
+      this.$knex,
       'Knex in PostgresDatabase is not initialized. Probably, PostgresDatabase#initialize() was not called.'
     );
 
-    // const trxProvider = this._knex.transactionProvider();
+    // const trxProvider = this.$knex.transactionProvider();
     // this._transaction = await trxProvider();
-    this._transaction = await this._knex.transaction();
+    this._transaction = await this.$knex.transaction();
 
     this.logger.debug('Began!');
   }
@@ -133,8 +133,9 @@ export class PostgresDatabase implements IDatabase {
       this._transaction,
       'An error occurred in commitTransaction() method: `transaction` is undefined '
     );
-    await this._transaction.commit();
+    const promise = this._transaction.commit();
     this._transaction = undefined;
+    await promise;
 
     this.logger.debug('Comitted!');
   }
@@ -186,8 +187,8 @@ export class PostgresDatabase implements IDatabase {
       await this.commitTransaction();
     }
     // Release connection
-    await this._knex?.destroy();
-    this._knex = undefined;
+    await this.$knex?.destroy();
+    this.$knex = undefined;
   }
 }
 

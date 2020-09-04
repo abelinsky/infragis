@@ -1,9 +1,10 @@
+import { inject, injectable } from 'inversify';
+
+import { LOGGER_TYPE } from '../../dependency-injection';
+import { ITransactionable } from '../../persistence/transactionable';
+import { EventName } from '../../types';
 import { ILogger } from '../../utils';
 import { StoredEvent } from '../core/stored-event';
-import { injectable, inject } from 'inversify';
-import { LOGGER_TYPE } from '../../dependency-injection';
-import { EventName } from '../../types';
-import { ITransactionable } from '../../persistence/transactionable';
 
 export interface IProjector {
   /**
@@ -30,7 +31,8 @@ export interface IProjector {
 
   /**
    * Sets the offset to the last processed event.
-   * @param lastProjectedEvent Event that was already processed by this projector.
+   * @param lastProjectedEvent Event that was already processed by this
+   *     projector.
    */
   setOffset(lastProjectedEvent: StoredEvent): Promise<void>;
 
@@ -67,9 +69,9 @@ export const PROJECTOR_HANDLER_TOPICS = '__PROJECTOR_HANDLER_TOPICS__';
 
 /**
  * Base class for the Projectors that are responsible for handling domain events
- * (occured inside the service) and/or notifications (received through MessageQueue)
- * and projecting those events into some state that corresponds to the moment in time
- * when this domain event/notification occurred.
+ * (occured inside the service) and/or notifications (received through
+ * MessageQueue) and projecting those events into some state that corresponds to
+ * the moment in time when this domain event/notification occurred.
  *
  * @example
  *
@@ -84,24 +86,29 @@ export const PROJECTOR_HANDLER_TOPICS = '__PROJECTOR_HANDLER_TOPICS__';
  *
  *       async getEvents(after: number, topic: string): Promise<StoredEvent[]> {
  *         switch (topic) {
- *           case EventName.fromString(AuthenticationEvents.EventNames.UserCreated).getTopic():
+ *           case
+ * EventName.fromString(AuthenticationEvents.EventNames.UserCreated).getTopic():
  *             return await this.eventStore.getAllEvents(after);
- *           case EventName.fromString(AuthenticationEvents.EventNames.SignUpRequested).getTopic():
+ *           case
+ * EventName.fromString(AuthenticationEvents.EventNames.SignUpRequested).getTopic():
  *             return await this.sessionEventStore.getAllEvents(after);
  *           default:
  *             throw new Error(
- *               `PostgresUserProjector is requested about the topic \"${topic}\" while it is not interested in it.`
+ *               `PostgresUserProjector is requested about the topic
+ * \"${topic}\" while it is not interested in it.`
  *             );
  *         }
  *       }
  *
  *       @ProjectionHandler(AuthenticationEvents.EventNames.UserCreated)
- *       async onUserCreated({ aggregateId, data }: StoredEvent<AuthenticationEvents.UserCreatedData>) {
+ *       async onUserCreated({ aggregateId, data }:
+ * StoredEvent<AuthenticationEvents.UserCreatedData>) {
  *         ...
  *       }
  *
  *       @ProjectionHandler(AuthenticationEvents.EventNames.SignUpRequested)
- *       async onSessionCreated({aggregateId, data}: StoredEvent<AuthenticationEvents.SignUpRequestedData>) {
+ *       async onSessionCreated({aggregateId, data}:
+ * StoredEvent<AuthenticationEvents.SignUpRequestedData>) {
  *         ...
  *       }
  *     }
@@ -139,7 +146,12 @@ export abstract class Projector implements IProjector {
   }
 
   apply = async (event: StoredEvent): Promise<boolean> => {
+    this.logger.debug(`$tr$Processing event ${event.name}`);
+
     const topic = EventName.fromString(event.name).getTopic();
+
+    this.logger.debug('$tr$pre Projector await this.getOffset(topic)');
+
     const currentPosition = await this.getOffset(topic);
     if (event.sequence !== currentPosition + 1) {
       this.logger.warn(`Can not apply event ${event.eventId} with 
@@ -149,10 +161,20 @@ export abstract class Projector implements IProjector {
       return false;
     }
 
+    this.logger.debug('$tr$pos Projector await this.getOffset(topic) in Projector');
+
+    this.logger.debug('$tr$pre Projector await this.transactionProvider.transaction in Projector');
+
     // Run event processing in a transaction
-    await this.transactionProvider.transaction(() =>
-      Promise.all([this.handleEvent(event), this.setOffset(event)])
-    );
+    // await this.transactionProvider.transaction(() =>
+    //   Promise.all([this.handleEvent(event), this.setOffset(event)])
+    // );
+
+    // TODO Run in one transaction
+    await this.handleEvent(event);
+    await this.setOffset(event);
+
+    this.logger.debug('$tr$post Projector await this.transactionProvider.transaction in Projector');
 
     return true;
   };

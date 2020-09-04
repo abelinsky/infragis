@@ -1,11 +1,10 @@
 import { inject, injectable } from 'inversify';
 import { from, Unsubscribable } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
-import { Class } from 'utility-types';
-import { Aggregate, StoredEvent } from '../core';
 import { IDomainEventsListener } from '../publishing';
 import { Projector } from './projector';
 import { DOMAIN_EVENTS_LISTENER } from '../../dependency-injection';
+// import { eachValueFrom } from 'rxjs-for-await';
 
 /**
  * An internal Projector that listens for domain events published internally
@@ -41,9 +40,13 @@ export abstract class DomesticProjector extends Projector {
 
     this.subscription = this.domainEventListener
       .getListener(regex)
-      // TODO: await or not?
-      //.pipe(concatMap((event) => from(this.apply(event))))
-      .subscribe(async (event) => await this.apply(event));
+      .pipe(concatMap((event) => from(this.apply(event))))
+      .subscribe();
+
+    // const source$ = this.domainEventListener.getListener(regex);
+    // for await (const event of eachValueFrom(source$)) {
+    //   await this.apply(event);
+    // }
   }
 
   async stop(): Promise<void> {
