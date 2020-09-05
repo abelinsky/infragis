@@ -37,32 +37,12 @@ export class PostgresUserRepository implements UserRepository {
 
   async store(user: User): Promise<void> {
     await this.eventStore.storeEvents(user.resetEvents(), user.persistedAggregateVersion);
-
-    this.logger.debug('$tr$post PostgresUserRepository await this.eventStore.storeEvents');
-
-    this.logger.debug(
-      '$tr$pre PostgresUserRepository const snapshot = await this.snapshotStore.get(user.aggregateId);'
-    );
-
     const snapshot = await this.snapshotStore.get(user.aggregateId);
-
-    this.logger.debug(
-      '$tr$post PostgresUserRepository const snapshot = await this.snapshotStore.get(user.aggregateId);'
-    );
-
     if (
       !snapshot ||
       user.aggregateVersion - (snapshot?.version || 0) > this.snapshotStoreInterval
     ) {
-      this.logger.debug(
-        '$tr$pre PostgresUserRepository await this.snapshotStore.store(user.snapshot);'
-      );
-
       await this.snapshotStore.store(user.snapshot);
-
-      this.logger.debug(
-        '$tr$post PostgresUserRepository await this.snapshotStore.store(user.snapshot);'
-      );
     }
   }
 }

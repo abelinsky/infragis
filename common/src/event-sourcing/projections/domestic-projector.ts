@@ -4,7 +4,7 @@ import { concatMap } from 'rxjs/operators';
 import { IDomainEventsListener } from '../publishing';
 import { Projector } from './projector';
 import { DOMAIN_EVENTS_LISTENER } from '../../dependency-injection';
-// import { eachValueFrom } from 'rxjs-for-await';
+import { eachValueFrom } from 'rxjs-for-await';
 
 /**
  * An internal Projector that listens for domain events published internally

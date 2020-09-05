@@ -6,3 +6,4 @@ export * from './postgres-snapshot-store';
 export * from './in-memory-store';
 export * from './postgres-domestic-projector';
 export * from './transactionable';
+export * from './transaction';

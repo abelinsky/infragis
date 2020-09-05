@@ -28,20 +28,11 @@ export abstract class PostgresDomesticProjector extends DomesticProjector {
   }
 
   async getOffset(topic: string): Promise<number> {
-    this.logger.debug(
-      '$tr$pre PostgresDomesticProjector#getOffset  const counter = await this.Counter()'
-    );
-
     const counter = await this.Counter()
       .select()
       .where('projectorGroupId', this.groupId)
       .andWhere({ topic })
       .first();
-
-    this.logger.debug(
-      '$tr$post PostgresDomesticProjector#getOffset  const counter = await this.Counter()'
-    );
-
     return counter?.offset ?? 0;
   }
 

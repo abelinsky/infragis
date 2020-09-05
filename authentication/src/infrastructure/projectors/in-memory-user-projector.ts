@@ -8,6 +8,8 @@ import {
   StoredEvent,
   InMemoryStore,
   ITransactionable,
+  ITransaction,
+  TransactionId,
 } from '@infragis/common';
 import { IN_MEMORY_USERS_STORE } from '../constants';
 
@@ -25,13 +27,24 @@ export class InMemoryUserProjector extends DomesticProjector {
   protected projection: Record<any, any> = {};
 
   protected get transactionProvider(): ITransactionable {
+    /* eslint-disable @typescript-eslint/no-empty-function */
+    const stubTransaction: ITransaction = {
+      id: TransactionId.generate(),
+      trx: { commit: () => {}, rollback: () => {}, isCompleted: () => false },
+    };
+    const beginTransaction = async () => stubTransaction;
+    const rollbackTransaction = async (transaction: ITransaction): Promise<void> => {};
+    const commitTransaction = async (transaction: ITransaction): Promise<void> => {};
+    const transaction = async (
+      runner: (transaction: ITransaction) => Promise<any>
+    ): Promise<any> => {};
+    /* eslint-enable @typescript-eslint/no-empty-function */
+
     const stub: ITransactionable = {
-      transaction: async (runner: () => Promise<any>): Promise<any> => Promise.resolve(),
-      /* eslint-disable @typescript-eslint/no-empty-function */
-      beginTransaction: async (): Promise<void> => {},
-      rollbackTransaction: async (): Promise<void> => {},
-      commitTransaction: async (): Promise<void> => {},
-      /* eslint-enable @typescript-eslint/no-empty-function */
+      beginTransaction,
+      rollbackTransaction,
+      commitTransaction,
+      transaction,
     };
     return stub;
   }

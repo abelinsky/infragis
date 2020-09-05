@@ -29,35 +29,13 @@ export class PostgresSessionRepository implements SessionRepository {
   ) {}
 
   async store(session: Session): Promise<void> {
-    this.logger.debug('$tr$pre PostgresSessionRepository store(session: Session) ');
-
     await this.eventStore.storeEvents(session.resetEvents(), session.persistedAggregateVersion);
-
-    this.logger.debug('$tr$post PostgresSessionRepository store(session: Session) ');
-
-    this.logger.debug(
-      '$tr$pre const snapshot = await this.snapshotStore.get(session.aggregateId); PostgresSessionRepository'
-    );
-
     const snapshot = await this.snapshotStore.get(session.aggregateId);
-
-    this.logger.debug(
-      '$tr$post const snapshot = await this.snapshotStore.get(session.aggregateId); PostgresSessionRepository'
-    );
-
     if (
       !snapshot ||
       session.aggregateVersion - (snapshot?.version || 0) > this.snapshotStoreInterval
     ) {
-      this.logger.debug(
-        '$tr$pre PostgresSessionRepository await this.snapshotStore.store(session.snapshot);'
-      );
-
       await this.snapshotStore.store(session.snapshot);
-
-      this.logger.debug(
-        '$tr$post PostgresSessionRepository await this.snapshotStore.store(session.snapshot);'
-      );
     }
   }
 }

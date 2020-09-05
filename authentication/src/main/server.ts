@@ -58,9 +58,14 @@ export class AuthenticationServer extends ServiceServer implements Authenticatio
 
   @RpcHandler(AuthenticationCommandsService)
   async requestEmailSignUp(payload: AuthenticationCommands.RequestEmailSignUp): Promise<void> {
-    await this.database.transaction(() => this.emailSignupUseCase.execute(payload));
+    // await this.database.transaction(() => this.emailSignupUseCase.execute(payload));
+    //await this.emailSignupUseCase.execute(payload);
 
-    // await this.emailSignupUseCase.execute(payload);
+    try {
+      await this.emailSignupUseCase.execute(payload);
+    } catch (error) {
+      this.logger.failure(error);
+    }
   }
 
   async handleShutdown(): Promise<void> {

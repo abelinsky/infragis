@@ -1,35 +1,48 @@
-import assert from 'assert';
 import { injectable, inject, interfaces } from 'inversify';
+import { AsyncLocalStorage } from 'async_hooks';
+import Knex from 'knex';
 import camelCase from 'camelcase';
 import decamelize from 'decamelize';
-import Knex from 'knex';
 import { IDatabase, DatabaseFactory } from './database';
+import { ITransaction } from './transaction';
 import { DatabaseConnectionCredentials } from './connection-credentials';
 import { DATABASE, LOGGER_TYPE } from '../dependency-injection';
 import { ILogger } from '../utils';
 import { TransactionException } from './transaction-exception';
+import { TransactionId } from '../types';
+
+const TRANSACTION_KEY = 'CURRENT_TRANSACTION';
 
 @injectable()
 export class PostgresDatabase implements IDatabase {
+  /**
+   * Transactions CLS (Continuation-Local Storage).
+   */
+  private asyncLocalStorage = new AsyncLocalStorage<Map<string, ITransaction>>();
+
+  /**
+   * Connection credentials of the database.
+   */
   private connectionCredentials: DatabaseConnectionCredentials | undefined = undefined;
 
+  /**
+   * Knex instance.
+   */
   private $knex: Knex | undefined = undefined;
 
   /**
-   * Current running transaction that is started by {@link PostgresDatabase#beginTransaction} method.
+   * Returns Knex instance or a knex `transaction` instance
+   * if the current async context is running within a transaction.
    */
-  private _transaction: Knex.Transaction | undefined = undefined;
+  get knex(): Knex {
+    if (!this.$knex) throw new Error('Knex is not initialized.');
+    // Check whether a CLS is defined and fetch transaction object out there
+    const store = this.asyncLocalStorage.getStore() as Map<string, ITransaction>;
+    const transaction = store?.get(TRANSACTION_KEY);
+    return ((transaction?.trx as unknown) as Knex) ?? this.$knex;
+  }
 
   constructor(@inject(LOGGER_TYPE) private logger: ILogger) {}
-
-  get knex() {
-    if (!this.$knex) {
-      throw new Error(
-        'Knex in PostgresDatabase is not initialized. Probably, PostgresDatabase#initialize() was not called.'
-      );
-    }
-    return this._transaction ?? this.$knex;
-  }
 
   initialize(credentials: DatabaseConnectionCredentials) {
     if (this.$knex) return; // Already initialized in a Singleton scope, no need to re-initialize.
@@ -78,11 +91,7 @@ export class PostgresDatabase implements IDatabase {
     this.logger.info('Performing database migrations ...');
 
     try {
-      const [_batchNo, log] = await this.knex.migrate.latest({
-        directory,
-        extension: 'ts',
-      });
-
+      const [_batchNo, log] = await this.knex.migrate.latest({ directory, extension: 'ts' });
       this.logger.success(
         log?.length === 0 ? 'Already up to date' : `√ ${log.length} migration(s) done.`
       );
@@ -94,11 +103,7 @@ export class PostgresDatabase implements IDatabase {
   async seed(directory: string): Promise<void> {
     this.logger.info('Seeding database ...');
     try {
-      const [log] = await this.knex.seed.run({
-        directory,
-        extension: 'ts',
-      });
-
+      const [log] = await this.knex.seed.run({ directory, extension: 'ts' });
       log?.length === 0
         ? this.logger.info('No seed files found.')
         : this.logger.success(`√ Ran ${log.length} seed files`);
@@ -107,85 +112,58 @@ export class PostgresDatabase implements IDatabase {
     }
   }
 
-  async beginTransaction(): Promise<void> {
-    this.logger.debug('Beginning transaction');
-
-    assert(
-      !this._transaction,
-      'A new transaction could not be started while another transaction is being executed.'
-    );
-    assert(
-      this.$knex,
-      'Knex in PostgresDatabase is not initialized. Probably, PostgresDatabase#initialize() was not called.'
-    );
-
-    // const trxProvider = this.$knex.transactionProvider();
-    // this._transaction = await trxProvider();
-    this._transaction = await this.$knex.transaction();
-
-    this.logger.debug('Began!');
+  async beginTransaction(): Promise<ITransaction> {
+    if (!this.$knex) throw new Error('Knex is not initialized.');
+    return {
+      id: TransactionId.generate(),
+      trx: await this.$knex.transaction(),
+    };
   }
 
-  async commitTransaction(): Promise<void> {
-    this.logger.debug('Comitting transaction');
-
-    assert(
-      this._transaction,
-      'An error occurred in commitTransaction() method: `transaction` is undefined '
-    );
-    const promise = this._transaction.commit();
-    this._transaction = undefined;
-    await promise;
-
-    this.logger.debug('Comitted!');
+  async commitTransaction(transaction: ITransaction): Promise<void> {
+    await transaction.trx.commit();
   }
 
-  async rollbackTransaction(): Promise<void> {
-    this.logger.debug('Rolling back.');
-
-    assert(
-      this._transaction,
-      'An error occurred in rollbackTransaction(): `transaction` is undefined '
-    );
-    if (this._transaction.isCompleted()) {
-      this.logger.warn(
-        'The request to rollback the transaction is rejected because the transaction has already been completed.'
-      );
+  async rollbackTransaction(transaction: ITransaction): Promise<void> {
+    if (transaction.trx.isCompleted()) {
+      this.logger.warn('Rollback of the transaction is rejected (it has already been completed).');
     } else {
-      await this._transaction.rollback();
-      this.logger.warn('Transaction rollback finished ');
+      await transaction.trx.rollback();
     }
-    this._transaction = undefined;
-
-    this.logger.debug('Rolled back!');
+    this.logger.warn('Transaction rollback finished ');
   }
 
-  async transaction<T>(runner: () => Promise<T>): Promise<T> {
-    // Begin transaction
-    await this.beginTransaction();
-
-    // Execute runner within a try / catch block
+  async transaction<T>(runner: (transaction: ITransaction) => Promise<T>): Promise<T> {
+    let transaction: ITransaction | undefined;
     try {
-      this.logger.debug('Starting runner');
-      const result = await runner();
-      this.logger.debug('Ran!');
-      await this.commitTransaction();
-      return result;
-    } catch (error) {
-      this.logger.error(error, 'Failed to execute database transaction');
+      transaction = await this.beginTransaction();
+      // Run the transaction within a new asynchronous context.
+      const res = await this.asyncLocalStorage.run(new Map<string, ITransaction>(), async () => {
+        const store = this.asyncLocalStorage.getStore();
+        store!.set(TRANSACTION_KEY, transaction!);
+        const result = await runner(transaction!);
+        await this.commitTransaction(transaction!);
+        return result;
+      });
+      return res;
+    } catch (err) {
+      this.logger.error(err, 'Failed to execute database transaction');
+      const error = new TransactionException(err);
       // If any exception occurred, rollback the transaction
       // so that none of the changes are persisted to the database.
-      await this.rollbackTransaction();
+      if (transaction) {
+        try {
+          await this.rollbackTransaction(transaction);
+        } catch (e) {
+          error.details = `Rollback also failed: ${e}`;
+        }
+      }
       // Throw the exception so it can be handled in the downstream.
-      throw new TransactionException(error);
+      throw error;
     }
   }
 
   async closeConnection(): Promise<void> {
-    // Commit transaction if any
-    if (this._transaction) {
-      await this.commitTransaction();
-    }
     // Release connection
     await this.$knex?.destroy();
     this.$knex = undefined;
